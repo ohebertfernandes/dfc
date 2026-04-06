@@ -73,6 +73,11 @@
                     </svg>
                     <span>Entrar com Google</span>
                 </button>
+
+                <button id="btn-guest" type="button" onclick="window.appActions.loginAnonymously()" class="w-full bg-[#1a1a1a] border border-[#333] text-gray-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-[#2a2a2a] transition-colors h-12 mt-3">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span>Entrar como Visitante</span>
+                </button>
             </div>
         </div>
     </div>
@@ -305,7 +310,7 @@
     <!-- SCRIPT PRINCIPAL -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, query, addDoc, updateDoc, deleteDoc, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         // Inicialização do Firebase com Fallback para garantir a conexão ao seu banco
@@ -707,6 +712,19 @@
                 }
             },
 
+            loginAnonymously: async () => {
+                const errorEl = document.getElementById('login-error');
+                errorEl.classList.add('hidden');
+                window.appActions.setLoading(true, 'btn-guest');
+                try {
+                    await signInAnonymously(auth);
+                } catch(e) {
+                    errorEl.innerText = "Erro ao entrar como visitante: " + e.message;
+                    errorEl.classList.remove('hidden');
+                    window.appActions.setLoading(false, 'btn-guest');
+                }
+            },
+
             loginWithGoogle: async () => {
                 const errorEl = document.getElementById('login-error');
                 errorEl.classList.add('hidden');
@@ -718,9 +736,9 @@
                 } catch(e) {
                     console.error("Google Login Erro:", e);
                     let msg = "Erro ao entrar com Google.";
-                    // Tratamento caprichado do erro mais comum em iframes/previews:
+                    // Tratamento específico e caprichado para o erro de iframe/preview
                     if (e.code === 'auth/unauthorized-domain') {
-                        msg = "Domínio não autorizado pelo Firebase. Vá no Console do Firebase > Authentication > Settings > Authorized domains e adicione a URL que está na barra de pesquisa.";
+                        msg = `<strong>Proteção do Firebase:</strong><br/>O Google bloqueia pop-ups neste ambiente de preview (testes).<br/><br/>Para testar a plataforma agora, use a opção abaixo <strong>"Entrar como Visitante"</strong> ou crie uma conta com e-mail e senha.`;
                     } else if (e.code === 'auth/popup-closed-by-user') {
                         msg = "O login foi cancelado.";
                     } else if (e.code === 'auth/popup-blocked') {
@@ -728,7 +746,7 @@
                     } else if (e.message) {
                         msg += " " + e.message;
                     }
-                    errorEl.innerText = msg;
+                    errorEl.innerHTML = msg;
                     errorEl.classList.remove('hidden');
                 } finally {
                     window.appActions.setLoading(false, 'btn-google');
