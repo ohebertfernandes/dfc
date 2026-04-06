@@ -11,51 +11,66 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
-        body { background-color: #0a0a0a; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; }
+        body { background-color: #0a0a0a; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; overflow-x: hidden; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #141414; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
         
-        /* Ocultar elementos para navegação */
         .hidden { display: none !important; }
+        
+        /* Animações Premium */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
     <!-- TELA DE LOGIN -->
-    <div id="login-screen" class="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4">
-        <div class="w-full max-w-md bg-[#141414] border border-[#2a2a2a] rounded-2xl p-8 shadow-2xl">
+    <div id="login-screen" class="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4 transition-opacity duration-500">
+        <div class="w-full max-w-md bg-[#141414] border border-[#2a2a2a] rounded-2xl p-8 shadow-2xl animate-scale-in">
             <div class="flex justify-center mb-8">
-                <div class="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center font-bold text-white text-3xl shadow-lg shadow-red-600/20">S</div>
+                <div class="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center font-bold text-white text-3xl shadow-lg shadow-red-600/20 transition-transform hover:scale-105">S</div>
             </div>
             <h1 class="text-3xl font-bold text-center text-white mb-2">SQUAD<span class="text-red-500">DFC</span></h1>
             <p class="text-gray-400 text-center mb-8">Gestão Financeira e de Projetos</p>
             
             <div id="login-form-container" class="space-y-4">
-                <div id="name-field" class="hidden">
+                <div id="name-field" class="hidden animate-fade-in">
                     <label class="block text-xs font-medium text-gray-500 mb-1">Nome Completo</label>
-                    <input type="text" id="login-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" placeholder="Seu nome" />
+                    <input type="text" id="login-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="Como quer ser chamado?" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">E-mail</label>
-                    <input type="email" id="login-email" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" placeholder="seu@email.com" />
+                    <input type="email" id="login-email" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="seu@email.com" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1">Senha</label>
-                    <input type="password" id="login-password" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" placeholder="••••••••" />
+                    <input type="password" id="login-password" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="••••••••" />
                 </div>
                 
-                <div id="login-error" class="text-red-500 text-xs font-medium text-center hidden bg-red-500/10 border border-red-500/20 rounded p-3"></div>
+                <div id="login-error" class="text-red-500 text-xs font-medium text-center hidden bg-red-500/10 border border-red-500/20 rounded p-3 animate-fade-in"></div>
                 
-                <button id="btn-action" type="button" onclick="window.appActions.handleEmailAuth()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-red-900/30 flex justify-center items-center h-12">
+                <button id="btn-action" type="button" onclick="window.appActions.handleEmailAuth()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-all shadow-lg shadow-red-900/30 flex justify-center items-center h-12 hover:scale-[1.02]">
                     Entrar
                 </button>
                 
                 <div class="text-center text-sm text-gray-400 mt-2">
                     <span id="toggle-auth-text">Não tem uma conta?</span>
-                    <button type="button" onclick="window.appActions.toggleAuthMode()" class="text-red-500 hover:text-red-400 font-medium ml-1">Criar conta</button>
+                    <button type="button" onclick="window.appActions.toggleAuthMode()" class="text-red-500 hover:text-red-400 font-medium ml-1 transition-colors">Criar conta</button>
                 </div>
 
                 <div class="relative flex items-center py-2">
@@ -64,7 +79,7 @@
                     <div class="flex-grow border-t border-[#333]"></div>
                 </div>
 
-                <button id="btn-google" type="button" onclick="window.appActions.loginWithGoogle()" class="w-full bg-white text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-colors h-12">
+                <button id="btn-google" type="button" onclick="window.appActions.loginWithGoogle()" class="w-full bg-white text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-all h-12 hover:scale-[1.02]">
                     <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
@@ -74,72 +89,90 @@
                     <span>Entrar com Google</span>
                 </button>
 
-                <button id="btn-guest" type="button" onclick="window.appActions.loginAnonymously()" class="w-full bg-[#1a1a1a] border border-[#333] text-gray-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-[#2a2a2a] transition-colors h-12 mt-3">
+                <button id="btn-guest" type="button" onclick="window.appActions.loginAnonymously()" class="w-full bg-[#1a1a1a] border border-[#333] text-gray-300 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-[#2a2a2a] transition-all h-12 mt-3 hover:scale-[1.02]">
                     <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <span>Entrar como Visitante</span>
+                    <span>Acesso Rápido (Visitante)</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- TELA PRINCIPAL (APP) -->
-    <div id="app-screen" class="hidden min-h-screen bg-[#0a0a0a] text-gray-200 flex flex-col md:flex-row">
+    <div id="app-screen" class="hidden min-h-screen bg-[#0a0a0a] text-gray-200 flex flex-col md:flex-row transition-opacity duration-500">
         
-        <!-- Sidebar -->
-        <nav class="w-full md:w-64 bg-[#141414] border-r border-[#2a2a2a] flex flex-col justify-between z-10 fixed md:relative bottom-0 md:bottom-auto h-16 md:h-screen">
-            <div class="flex md:flex-col w-full h-full">
-                <div class="hidden md:flex p-6 items-center gap-3 border-b border-[#2a2a2a]">
-                    <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white">S</div>
-                    <span class="text-xl font-bold tracking-wider text-white">SQUAD<span class="text-red-500">DFC</span></span>
+        <!-- Overlay Mobile Sidebar -->
+        <div id="sidebar-overlay" onclick="window.appActions.toggleMobileMenu()" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden backdrop-blur-sm transition-opacity"></div>
+
+        <!-- Sidebar Responsiva -->
+        <nav id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-50 w-64 bg-[#141414] border-r border-[#2a2a2a] flex flex-col justify-between h-screen">
+            <div class="flex flex-col w-full h-full">
+                <div class="flex p-6 items-center justify-between border-b border-[#2a2a2a]">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white shadow-lg shadow-red-600/20">S</div>
+                        <span class="text-xl font-bold tracking-wider text-white">SQUAD<span class="text-red-500">DFC</span></span>
+                    </div>
+                    <button onclick="window.appActions.toggleMobileMenu()" class="md:hidden text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
                 </div>
-                <div class="flex md:flex-col w-full justify-around md:justify-start md:mt-6 p-2 md:p-4 gap-2" id="nav-menu">
+                
+                <!-- Info Usuário Logado (Sidebar) -->
+                <div class="p-4 border-b border-[#2a2a2a] bg-[#1a1a1a] flex items-center gap-3 cursor-pointer hover:bg-[#222] transition-colors" onclick="window.appActions.changeTab('profile')">
+                    <img id="sidebar-avatar-img" class="w-10 h-10 rounded-full border-2 border-red-500 object-cover hidden" src="" alt="Avatar" />
+                    <div id="sidebar-avatar-initial" class="w-10 h-10 rounded-full bg-red-900/50 border-2 border-red-500 flex items-center justify-center font-bold text-red-200">U</div>
+                    <div class="overflow-hidden">
+                        <p id="sidebar-user-name" class="text-sm font-bold text-white truncate">Usuário</p>
+                        <p class="text-xs text-red-400">Ver Perfil</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-col w-full justify-start mt-4 p-4 gap-2 overflow-y-auto" id="nav-menu">
                     <!-- Nav items renderizados via JS -->
                 </div>
-            </div>
-            <div class="hidden md:flex p-4 border-t border-[#2a2a2a]">
-                <button onclick="window.appActions.logout()" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-full p-2">
-                    <i data-lucide="log-out" class="w-5 h-5"></i><span>Sair</span>
-                </button>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="flex-1 overflow-y-auto pb-20 md:pb-0 relative">
-            <header class="bg-[#141414] border-b border-[#2a2a2a] p-4 flex justify-between items-center sticky top-0 z-10">
-                <h1 id="header-title" class="text-xl font-semibold text-white capitalize">Dashboard</h1>
+        <main class="flex-1 h-screen overflow-y-auto relative flex flex-col">
+            <header class="bg-[#141414]/95 backdrop-blur-md border-b border-[#2a2a2a] p-4 flex justify-between items-center sticky top-0 z-30">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.appActions.toggleMobileMenu()" class="md:hidden text-gray-400 hover:text-white transition-colors">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <h1 id="header-title" class="text-xl font-semibold text-white capitalize hidden sm:block">Dashboard</h1>
+                </div>
+                
                 <div class="flex items-center gap-4">
-                    <input type="month" id="selected-month" class="bg-[#2a2a2a] border border-[#444] rounded px-3 py-1.5 text-sm focus:outline-none focus:border-red-500" />
-                    <div id="user-avatar" class="w-8 h-8 rounded-full bg-red-900/50 border border-red-500 flex items-center justify-center text-sm font-bold text-red-200">U</div>
+                    <span id="user-greeting" class="text-sm font-medium text-gray-300 hidden md:block"></span>
+                    <input type="month" id="selected-month" class="bg-[#0a0a0a] border border-[#333] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-red-500 transition-colors shadow-inner" />
                 </div>
             </header>
 
-            <div class="p-4 md:p-8" id="tab-content">
+            <div class="p-4 md:p-8 flex-1" id="tab-content">
                 <!-- Conteúdo das abas renderizado via JS -->
             </div>
         </main>
     </div>
 
-    <!-- MODAIS -->
-    <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <!-- MODAIS (Pop-ups) -->
+    <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-opacity">
         
         <!-- Modal Cliente -->
-        <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col">
-            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414] z-10">
+        <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
+            <!-- (Conteúdo do Modal Cliente Mantido e Otimizado para UI) -->
+            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-10">
                 <h2 id="client-modal-title" class="text-2xl font-bold text-white">Novo Cliente</h2>
-                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#2a2a2a] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
-                <!-- Coluna 1 -->
                 <div class="space-y-4">
                     <input type="hidden" id="client-id" />
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Nome do Cliente</label>
-                        <input type="text" id="client-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+                        <input type="text" id="client-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors" />
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Fase</label>
-                            <select id="client-phase" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none">
+                            <select id="client-phase" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors">
                                 <option value="Tratativa">Tratativa</option>
                                 <option value="Implementação">Implementação</option>
                                 <option value="Manutenção">Manutenção</option>
@@ -147,7 +180,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Status</label>
-                            <select id="client-status" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none">
+                            <select id="client-status" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors">
                                 <option value="Ativo">Ativo</option>
                                 <option value="Churn">Churn</option>
                             </select>
@@ -156,16 +189,16 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Fornecedor</label>
-                            <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+                            <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors" />
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Sistema</label>
-                            <input type="text" id="client-system" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+                            <input type="text" id="client-system" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors" />
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Tipo de Serviço</label>
-                        <input type="text" id="client-serviceType" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+                        <input type="text" id="client-serviceType" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors" />
                     </div>
 
                     <!-- Atribuição de Equipe -->
@@ -173,18 +206,17 @@
                         <div class="col-span-2"><label class="block text-xs font-medium text-red-500 mb-1 uppercase tracking-wider">Responsável (Equipe)</label></div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Integrante</label>
-                            <select id="client-assignedMemberId" class="w-full bg-[#141414] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none">
+                            <select id="client-assignedMemberId" class="w-full bg-[#141414] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none transition-colors">
                                 <option value="">Nenhum</option>
                             </select>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">% Atribuída</label>
-                            <input type="number" min="0" max="100" id="client-memberPercentage" value="100" class="w-full bg-[#141414] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" />
+                            <input type="number" min="0" max="100" id="client-memberPercentage" value="100" class="w-full bg-[#141414] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none transition-colors" />
                         </div>
                     </div>
                 </div>
 
-                <!-- Coluna 2: Financeiro -->
                 <div class="space-y-4 bg-[#1a1a1a] p-5 rounded-xl border border-[#2a2a2a]">
                     <h3 class="text-sm font-bold text-red-500 mb-4 border-b border-[#333] pb-2">Dados Financeiros</h3>
                     <div class="grid grid-cols-2 gap-4">
@@ -192,7 +224,7 @@
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Valor Recorrente (MRR)</label>
                             <div class="relative w-full">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
-                                <input type="text" id="client-recurringValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2 pl-9 text-white focus:border-red-500 focus:outline-none" />
+                                <input type="text" id="client-recurringValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2 pl-9 text-white focus:border-red-500 focus:outline-none transition-colors" />
                             </div>
                         </div>
                         <div>
@@ -205,7 +237,7 @@
                             <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Valor One Time</label>
                             <div class="relative w-full">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
-                                <input type="text" id="client-oneTimeValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2 pl-9 text-white focus:border-red-500 focus:outline-none" />
+                                <input type="text" id="client-oneTimeValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2 pl-9 text-white focus:border-red-500 focus:outline-none transition-colors" />
                             </div>
                         </div>
                         <div>
@@ -215,79 +247,79 @@
                     </div>
                     <div class="mt-4 pt-4 border-t border-[#333]">
                         <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Data de Entrega</label>
-                        <input type="date" id="client-deliveryDate" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" style="color-scheme: dark;" />
+                        <input type="date" id="client-deliveryDate" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none transition-colors" style="color-scheme: dark;" />
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1 uppercase">Nota NPS</label>
-                        <input type="number" max="10" min="0" id="client-nps" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" />
+                        <input type="number" max="10" min="0" id="client-nps" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none transition-colors" />
                     </div>
                 </div>
                 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Observações / Motivo Churn</label>
-                    <textarea id="client-observation" rows="3" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-3 text-white focus:border-red-500 focus:outline-none resize-none"></textarea>
+                    <textarea id="client-observation" rows="3" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-3 text-white focus:border-red-500 focus:outline-none resize-none transition-colors"></textarea>
                 </div>
             </div>
-            <div class="p-6 border-t border-[#2a2a2a] bg-[#141414] flex justify-end gap-3 sticky bottom-0">
+            <div class="p-6 border-t border-[#2a2a2a] bg-[#141414] flex justify-end gap-3 sticky bottom-0 z-10">
                 <button onclick="window.appActions.closeModal()" class="px-5 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
-                <button onclick="window.appActions.saveClient()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-red-900/30">Salvar Cliente</button>
+                <button onclick="window.appActions.saveClient()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-transform shadow-lg shadow-red-900/30 hover:scale-105">Salvar Cliente</button>
             </div>
         </div>
 
         <!-- Modal Team -->
-        <div id="modal-team" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col">
+        <div id="modal-team" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center">
                 <h2 id="team-modal-title" class="text-xl font-bold text-white">Novo Integrante</h2>
-                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#2a2a2a] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="team-id" />
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Nome Completo</label>
-                    <input type="text" id="team-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+                    <input type="text" id="team-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Cargo / Função</label>
-                    <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+                    <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none transition-colors" />
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Custo Fixo Mensal (R$)</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
-                        <input type="text" id="team-cost" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white focus:border-red-500 focus:outline-none" />
+                        <input type="text" id="team-cost" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white focus:border-red-500 focus:outline-none transition-colors" />
                     </div>
                 </div>
             </div>
             <div class="p-6 border-t border-[#2a2a2a] bg-[#1a1a1a] flex justify-end gap-3">
                 <button onclick="window.appActions.closeModal()" class="px-5 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
-                <button onclick="window.appActions.saveTeam()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-red-900/30">Salvar</button>
+                <button onclick="window.appActions.saveTeam()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-transform shadow-lg shadow-red-900/30 hover:scale-105">Salvar</button>
             </div>
         </div>
 
         <!-- Modal History -->
-        <div id="modal-history" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col">
+        <div id="modal-history" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center">
                 <h2 id="history-modal-title" class="text-xl font-bold text-white">Adicionar Mês ao Histórico</h2>
-                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#2a2a2a] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Mês de Referência</label>
-                    <input type="month" id="history-month" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none disabled:opacity-50" />
+                    <input type="month" id="history-month" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none disabled:opacity-50 transition-colors" />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">MRR Bruto (R$)</label>
                         <div class="relative w-full">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
-                            <input type="text" id="history-mrr" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white focus:border-red-500 focus:outline-none" />
+                            <input type="text" id="history-mrr" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white focus:border-red-500 focus:outline-none transition-colors" />
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-red-500 mb-1 uppercase tracking-wider">Margem MC (R$)</label>
                         <div class="relative w-full">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
-                            <input type="text" id="history-margin" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white border-red-500/30 focus:border-red-500 focus:outline-none" />
+                            <input type="text" id="history-margin" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white border-red-500/30 focus:border-red-500 focus:outline-none transition-colors" />
                         </div>
                     </div>
                 </div>
@@ -295,13 +327,13 @@
                     <label class="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Custos Totais</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
-                        <input type="text" id="history-cost" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white focus:border-red-500 focus:outline-none" />
+                        <input type="text" id="history-cost" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 pl-9 text-white focus:border-red-500 focus:outline-none transition-colors" />
                     </div>
                 </div>
             </div>
             <div class="p-6 border-t border-[#2a2a2a] bg-[#1a1a1a] flex justify-end gap-3">
                 <button onclick="window.appActions.closeModal()" class="px-5 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
-                <button onclick="window.appActions.saveHistory()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-red-900/30">Salvar Histórico</button>
+                <button onclick="window.appActions.saveHistory()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-transform shadow-lg shadow-red-900/30 hover:scale-105">Salvar Histórico</button>
             </div>
         </div>
 
@@ -310,10 +342,10 @@
     <!-- SCRIPT PRINCIPAL -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, query, addDoc, updateDoc, deleteDoc, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // Inicialização do Firebase com Fallback para garantir a conexão ao seu banco
+        // Configuração do Firebase
         const fallbackConfig = {
             apiKey: "AIzaSyDML8GP1iSR92I-07L3cUhe9B3AwIuuQnM",
             authDomain: "squaddfc-a7f0e.firebaseapp.com",
@@ -343,7 +375,8 @@
             clients: [], transactions: [], team: [], closures: [],
             selectedMonth: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })(),
             clientFilter: 'Todos',
-            isSignUpMode: false
+            isSignUpMode: false,
+            chartInstance: null
         };
 
         // Utilitários Financeiros
@@ -351,53 +384,49 @@
         const formatNumberToBR = (val) => (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const calcMargin = (val) => val ? (val * 0.7075) * 0.35 : 0;
 
-        // Máscaras de Moeda (DOM Setup)
+        // Máscaras de Moeda
         function setupCurrencyMasks() {
             document.querySelectorAll('.currency-mask').forEach(input => {
-                input.addEventListener('input', (e) => {
+                // Previne múltiplos listeners
+                const newInp = input.cloneNode(true);
+                input.parentNode.replaceChild(newInp, input);
+                
+                newInp.addEventListener('input', (e) => {
                     let val = e.target.value.replace(/\D/g, '');
                     if (val === '') { 
-                        e.target.dataset.value = 0; 
-                        e.target.value = ''; 
+                        e.target.dataset.value = 0; e.target.value = ''; 
                     } else {
                         let num = Number(val) / 100;
                         e.target.dataset.value = num;
                         e.target.value = formatNumberToBR(num);
                     }
-                    // Atualizar margem no form de clientes se for campo de valor
-                    if(input.id === 'client-recurringValue') {
-                        document.getElementById('client-recurringMargin').innerText = formatCurrency(calcMargin(Number(input.dataset.value)));
-                    }
-                    if(input.id === 'client-oneTimeValue') {
-                        document.getElementById('client-oneTimeMargin').innerText = formatCurrency(calcMargin(Number(input.dataset.value)));
-                    }
+                    if(newInp.id === 'client-recurringValue') document.getElementById('client-recurringMargin').innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                    if(newInp.id === 'client-oneTimeValue') document.getElementById('client-oneTimeMargin').innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
                 });
             });
         }
         function setCurrencyInput(id, value) {
             const el = document.getElementById(id);
-            if(el) {
-                el.dataset.value = value || 0;
-                el.value = formatNumberToBR(value);
-            }
+            if(el) { el.dataset.value = value || 0; el.value = formatNumberToBR(value); }
         }
         function getCurrencyInput(id) {
             const el = document.getElementById(id);
             return el ? Number(el.dataset.value || 0) : 0;
         }
 
-        // Sistema de Renderização
+        // Sistema de Renderização de Menu
         function renderNav() {
             const tabs = [
                 { id: 'dashboard', icon: 'layout-dashboard', label: 'Dashboard' },
                 { id: 'clients', icon: 'users', label: 'Clientes' },
                 { id: 'team', icon: 'briefcase', label: 'Equipe' },
                 { id: 'closure', icon: 'calculator', label: 'Fechamento' },
-                { id: 'history', icon: 'history', label: 'Histórico Anual' }
+                { id: 'history', icon: 'history', label: 'Histórico Anual' },
+                { id: 'profile', icon: 'user', label: 'Meu Perfil' }
             ];
             document.getElementById('nav-menu').innerHTML = tabs.map(t => `
-                <button onclick="window.appActions.changeTab('${t.id}')" class="flex items-center gap-3 w-full p-3 rounded-lg transition-all ${state.activeTab === t.id ? 'bg-red-600 text-white font-medium shadow-lg shadow-red-900/20' : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'}">
-                    <i data-lucide="${t.icon}" class="w-5 h-5"></i><span class="hidden md:block">${t.label}</span>
+                <button onclick="window.appActions.changeTab('${t.id}')" class="flex items-center gap-3 w-full p-3 rounded-lg transition-all duration-300 ${state.activeTab === t.id ? 'bg-red-600 text-white font-medium shadow-lg shadow-red-900/20 translate-x-1' : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white hover:translate-x-1'}">
+                    <i data-lucide="${t.icon}" class="w-5 h-5"></i><span class="md:block">${t.label}</span>
                 </button>
             `).join('');
             document.getElementById('header-title').innerText = tabs.find(t => t.id === state.activeTab).label;
@@ -405,11 +434,12 @@
 
         function renderContent() {
             const content = document.getElementById('tab-content');
-            if (state.activeTab === 'dashboard') content.innerHTML = getDashboardHTML();
+            if (state.activeTab === 'dashboard') { content.innerHTML = getDashboardHTML(); setTimeout(renderChart, 100); }
             if (state.activeTab === 'clients') content.innerHTML = getClientsHTML();
             if (state.activeTab === 'team') content.innerHTML = getTeamHTML();
             if (state.activeTab === 'closure') content.innerHTML = getClosureHTML();
             if (state.activeTab === 'history') content.innerHTML = getHistoryHTML();
+            if (state.activeTab === 'profile') content.innerHTML = getProfileHTML();
             lucide.createIcons();
         }
 
@@ -417,6 +447,44 @@
             renderNav();
             renderContent();
             setupCurrencyMasks();
+        }
+
+        // Gráfico do Dashboard (Chart.js)
+        function renderChart() {
+            const ctx = document.getElementById('yearlyChart');
+            if(!ctx) return;
+            
+            // Ordenar histórico cronologicamente
+            const sortedClosures = [...state.closures].sort((a,b) => a.month.localeCompare(b.month));
+            const labels = sortedClosures.map(c => c.month);
+            const revenues = sortedClosures.map(c => c.margemTotalRealizada);
+            const costs = sortedClosures.map(c => c.custosTotais);
+
+            if(state.chartInstance) state.chartInstance.destroy();
+            
+            state.chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Mês Exemplo'],
+                    datasets: [
+                        { label: 'Faturamento (Margem)', data: revenues.length > 0 ? revenues : [0], backgroundColor: '#dc2626', borderRadius: 4, maxBarThickness: 40 },
+                        { label: 'Custos Totais', data: costs.length > 0 ? costs : [0], backgroundColor: '#374151', borderRadius: 4, maxBarThickness: 40 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 1000, easing: 'easeOutQuart' },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#2a2a2a', borderDash: [5, 5] }, ticks: { color: '#9ca3af', callback: function(val){ return 'R$ ' + val; } } },
+                        x: { grid: { display: false }, ticks: { color: '#9ca3af' } }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#e5e7eb', font: { family: 'inherit' } } },
+                        tooltip: { backgroundColor: '#141414', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1 }
+                    }
+                }
+            });
         }
 
         // --- GERAÇÃO DE HTML DAS ABAS ---
@@ -431,42 +499,55 @@
             const realMargin = moTrans.reduce((a, c) => a + c.marginValue, 0);
 
             const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-            const cVar = 400; // Terceiros
+            const cVar = 400; // Terceiros simulado
             const lucro = realMargin - (cFixo + cVar);
 
             const barRecPercent = prevMRR > 0 ? Math.min(100, Math.round((realMRR / prevMRR) * 100)) : 0;
             const barOTPercent = prevOT > 0 ? Math.min(100, Math.round((realOT / prevOT) * 100)) : 0;
 
             return `
-                <div class="space-y-6">
+                <div class="space-y-6 animate-fade-in">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="p-6 rounded-xl border bg-[#141414] border-[#2a2a2a]">
+                        <div class="p-6 rounded-xl border bg-[#141414] border-[#2a2a2a] transition-all hover:border-[#444] hover:shadow-lg">
                             <div class="flex justify-between items-start mb-2"><h3 class="text-gray-400 text-sm font-medium">MRR Bruto (Realizado)</h3><i data-lucide="trending-up" class="text-gray-400"></i></div>
                             <div class="text-3xl font-bold text-white">${formatCurrency(realMRR)}</div>
                         </div>
-                        <div class="p-6 rounded-xl border bg-red-900/10 border-red-500/30">
+                        <div class="p-6 rounded-xl border bg-red-900/10 border-red-500/30 transition-all hover:border-red-500/50 hover:shadow-lg hover:shadow-red-900/10">
                             <div class="flex justify-between items-start mb-2"><h3 class="text-gray-400 text-sm font-medium">MRR Margem (MC)</h3><i data-lucide="dollar-sign" class="text-red-500"></i></div>
                             <div class="text-3xl font-bold text-white">${formatCurrency(realMargin)}</div>
                         </div>
-                        <div class="p-6 rounded-xl border bg-[#141414] border-[#2a2a2a]">
+                        <div class="p-6 rounded-xl border bg-[#141414] border-[#2a2a2a] transition-all hover:border-[#444] hover:shadow-lg">
                             <div class="flex justify-between items-start mb-2"><h3 class="text-gray-400 text-sm font-medium">Lucro Líquido</h3><i data-lucide="check-circle-2" class="${lucro >= 0 ? 'text-emerald-500' : 'text-red-500'}"></i></div>
                             <div class="text-3xl font-bold ${lucro >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatCurrency(lucro)}</div>
                         </div>
                     </div>
+                    
+                    <!-- Novo Gráfico de Evolução -->
+                    <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 shadow-md transition-all hover:border-[#444]">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold flex items-center gap-2"><i data-lucide="bar-chart-2" class="text-red-500 w-5 h-5"></i> Evolução Anual</h3>
+                            <span class="text-xs text-gray-500 bg-[#2a2a2a] px-2 py-1 rounded">Baseado no Histórico</span>
+                        </div>
+                        <div class="h-64 w-full relative">
+                            ${state.closures.length === 0 ? '<div class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm">Trave um mês no Fechamento para ver os gráficos.</div>' : ''}
+                            <canvas id="yearlyChart"></canvas>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6">
+                        <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 transition-all hover:border-[#444]">
                             <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="alert-circle" class="text-red-500 w-5 h-5"></i> Previsto vs Realizado</h3>
                             <div class="space-y-4">
-                                <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-300">MRR (Recorrente)</span><span class="text-gray-400">${formatCurrency(realMRR)} / ${formatCurrency(prevMRR)}</span></div><div class="h-2 w-full bg-[#2a2a2a] rounded-full overflow-hidden"><div class="h-full bg-red-600 transition-all" style="width: ${barRecPercent}%"></div></div></div>
-                                <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-300">Projetos (One Time)</span><span class="text-gray-400">${formatCurrency(realOT)} / ${formatCurrency(prevOT)}</span></div><div class="h-2 w-full bg-[#2a2a2a] rounded-full overflow-hidden"><div class="h-full bg-red-600 transition-all" style="width: ${barOTPercent}%"></div></div></div>
+                                <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-300">MRR (Recorrente)</span><span class="text-gray-400">${formatCurrency(realMRR)} / ${formatCurrency(prevMRR)}</span></div><div class="h-2 w-full bg-[#2a2a2a] rounded-full overflow-hidden"><div class="h-full bg-red-600 transition-all duration-1000 ease-out" style="width: ${barRecPercent}%"></div></div></div>
+                                <div><div class="flex justify-between text-sm mb-1"><span class="text-gray-300">Projetos (One Time)</span><span class="text-gray-400">${formatCurrency(realOT)} / ${formatCurrency(prevOT)}</span></div><div class="h-2 w-full bg-[#2a2a2a] rounded-full overflow-hidden"><div class="h-full bg-red-600 transition-all duration-1000 ease-out" style="width: ${barOTPercent}%"></div></div></div>
                             </div>
                         </div>
-                        <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6">
-                            <h3 class="text-lg font-semibold mb-4">Fluxo de Caixa Simplificado</h3>
+                        <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 transition-all hover:border-[#444]">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><i data-lucide="wallet" class="text-red-500 w-5 h-5"></i> Fluxo de Caixa Simples</h3>
                             <div class="space-y-3 text-sm">
                                 <div class="flex justify-between items-center pb-2 border-b border-[#2a2a2a]"><span class="text-gray-400">Entradas (Margem MC)</span><span class="font-medium text-white">${formatCurrency(realMargin)}</span></div>
-                                <div class="flex justify-between items-center pb-2 border-b border-[#2a2a2a]"><span class="text-gray-400">Custos Fixos da Equipe</span><span class="font-medium text-red-400">-${formatCurrency(cFixo)}</span></div>
-                                <div class="flex justify-between items-center pb-2 border-b border-[#2a2a2a]"><span class="text-gray-400">Custos Variáveis (Terceiros)</span><span class="font-medium text-red-400">-${formatCurrency(cVar)}</span></div>
+                                <div class="flex justify-between items-center pb-2 border-b border-[#2a2a2a]"><span class="text-gray-400">Custos Fixos Equipe</span><span class="font-medium text-red-400">-${formatCurrency(cFixo)}</span></div>
+                                <div class="flex justify-between items-center pb-2 border-b border-[#2a2a2a]"><span class="text-gray-400">Custos Variáveis Estimados</span><span class="font-medium text-red-400">-${formatCurrency(cVar)}</span></div>
                                 <div class="flex justify-between items-center pt-2 text-lg"><span class="font-bold text-white">Resultado</span><span class="font-bold ${lucro >= 0 ? 'text-emerald-500' : 'text-red-500'}">${formatCurrency(lucro)}</span></div>
                             </div>
                         </div>
@@ -480,16 +561,18 @@
             const list = state.clients.filter(c => state.clientFilter === 'Todos' || c.phase === state.clientFilter);
             
             let html = `
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+                <div class="animate-fade-in flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
                         ${['Todos', 'Manutenção', 'Implementação', 'Tratativa'].map(p => `
-                            <button onclick="window.appActions.setClientFilter('${p}')" class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333]'}">${p}</button>
+                            <button onclick="window.appActions.setClientFilter('${p}')" class="px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-md shadow-red-900/30 transform scale-105' : 'bg-[#1a1a1a] text-gray-400 border border-[#333] hover:border-[#555]'}">${p}</button>
                         `).join('')}
                     </div>
-                    <button onclick="window.appActions.openClientModal()" class="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 w-full md:w-auto justify-center"><i data-lucide="plus" class="w-4 h-4"></i> Novo Cliente</button>
+                    <button onclick="window.appActions.openClientModal()" class="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 transition-transform hover:scale-105 w-full md:w-auto justify-center"><i data-lucide="plus" class="w-4 h-4"></i> Novo Cliente</button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 animate-fade-in">
             `;
+
+            if(list.length === 0) html += `<div class="col-span-full py-10 text-center text-gray-500 border border-dashed border-[#333] rounded-xl bg-[#141414]">Nenhum cliente encontrado.</div>`;
 
             html += list.map(client => {
                 const cTrans = moTrans.filter(t => t.clientId === client.id);
@@ -498,12 +581,12 @@
                 const isChurn = client.status === 'Churn';
 
                 return `
-                    <div class="bg-[#141414] border ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#2a2a2a] hover:border-[#444]'} rounded-xl p-5 relative transition-all">
-                        ${isChurn ? `<div class="absolute top-0 right-0 bg-red-900/80 text-white text-xs px-2 py-1 rounded-bl-lg font-bold">CHURN</div>` : ''}
+                    <div class="bg-[#141414] border ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#2a2a2a] hover:border-[#444] hover:shadow-lg'} rounded-xl p-5 relative transition-all duration-300 transform hover:-translate-y-1 group">
+                        ${isChurn ? `<div class="absolute top-0 right-0 bg-red-900/80 text-white text-xs px-2 py-1 rounded-bl-lg font-bold shadow-md">CHURN</div>` : ''}
                         <div class="cursor-pointer" onclick="window.appActions.openClientModal('${client.id}')">
                             <div class="flex justify-between items-start mb-3">
-                                <div><h3 class="font-bold text-lg text-white">${client.name}</h3><span class="text-xs text-red-400 bg-red-400/10 px-2 py-0.5 rounded">${client.phase}</span></div>
-                                <i data-lucide="chevron-right" class="text-gray-600 w-5 h-5"></i>
+                                <div><h3 class="font-bold text-lg text-white group-hover:text-red-400 transition-colors">${client.name}</h3><span class="text-xs text-red-400 bg-red-400/10 px-2 py-0.5 rounded border border-red-500/20">${client.phase}</span></div>
+                                <i data-lucide="chevron-right" class="text-gray-600 w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
                             </div>
                             <div class="space-y-1 mb-4">
                                 <p class="text-sm text-gray-400"><span class="text-gray-500">Fornecedor:</span> ${client.supplier || '-'}</p>
@@ -512,15 +595,15 @@
                         </div>
                         ${!isChurn ? `
                         <div class="pt-3 border-t border-[#2a2a2a] space-y-2">
-                            ${Number(client.recurringValue)>0 ? `<div class="flex items-center justify-between"><span class="text-xs text-gray-500">MRR: ${formatCurrency(client.recurringValue)}</span>
+                            ${Number(client.recurringValue)>0 ? `<div class="flex items-center justify-between"><span class="text-xs text-gray-500">MRR: <span class="font-medium text-gray-300">${formatCurrency(client.recurringValue)}</span></span>
                                 ${recTrans 
-                                    ? `<button onclick="window.appActions.removeBaixa('${recTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Recebido</button>`
-                                    : `<button onclick="window.appActions.darBaixa('${client.id}', '${client.name}', ${client.recurringValue}, 'recorrente')" class="text-xs bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white px-2 py-1 rounded border border-red-500/20">Dar Baixa MRR</button>`
+                                    ? `<button onclick="window.appActions.removeBaixa('${recTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1 transition-all hover:bg-emerald-500/20 hover:scale-105"><i data-lucide="check" class="w-3 h-3"></i> Recebido</button>`
+                                    : `<button onclick="window.appActions.darBaixa('${client.id}', '${client.name}', ${client.recurringValue}, 'recorrente')" class="text-xs bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white px-2 py-1 rounded border border-red-500/20 transition-all hover:scale-105 shadow-sm">Dar Baixa MRR</button>`
                                 }</div>` : ''}
-                            ${Number(client.oneTimeValue)>0 ? `<div class="flex items-center justify-between"><span class="text-xs text-gray-500">O.T.: ${formatCurrency(client.oneTimeValue)}</span>
+                            ${Number(client.oneTimeValue)>0 ? `<div class="flex items-center justify-between"><span class="text-xs text-gray-500">O.T.: <span class="font-medium text-gray-300">${formatCurrency(client.oneTimeValue)}</span></span>
                                 ${otTrans 
-                                    ? `<button onclick="window.appActions.removeBaixa('${otTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Recebido</button>`
-                                    : `<button onclick="window.appActions.darBaixa('${client.id}', '${client.name}', ${client.oneTimeValue}, 'onetime')" class="text-xs bg-gray-800 text-gray-300 hover:bg-white hover:text-black px-2 py-1 rounded border border-gray-700">Dar Baixa O.T.</button>`
+                                    ? `<button onclick="window.appActions.removeBaixa('${otTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1 transition-all hover:bg-emerald-500/20 hover:scale-105"><i data-lucide="check" class="w-3 h-3"></i> Recebido</button>`
+                                    : `<button onclick="window.appActions.darBaixa('${client.id}', '${client.name}', ${client.oneTimeValue}, 'onetime')" class="text-xs bg-gray-800 text-gray-300 hover:bg-white hover:text-black px-2 py-1 rounded border border-gray-700 transition-all hover:scale-105 shadow-sm">Dar Baixa O.T.</button>`
                                 }</div>` : ''}
                         </div>` : ''}
                     </div>
@@ -531,14 +614,15 @@
 
         function getTeamHTML() {
             let html = `
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold text-white">Gestão da Equipe</h2>
-                    <button onclick="window.appActions.openTeamModal()" class="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 transition-colors"><i data-lucide="plus" class="w-4 h-4"></i> Novo Integrante</button>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="animate-fade-in">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-white">Gestão da Equipe</h2>
+                        <button onclick="window.appActions.openTeamModal()" class="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 transition-transform hover:scale-105"><i data-lucide="plus" class="w-4 h-4"></i> Novo Integrante</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             `;
             if(state.team.length === 0) {
-                html += `<div class="col-span-full py-12 text-center border border-dashed border-[#333] rounded-xl bg-[#0a0a0a]"><i data-lucide="briefcase" class="w-8 h-8 mx-auto text-gray-600 mb-3"></i><p class="text-gray-400">Nenhum integrante cadastrado.</p></div>`;
+                html += `<div class="col-span-full py-12 text-center border border-dashed border-[#333] rounded-xl bg-[#141414]"><i data-lucide="briefcase" class="w-8 h-8 mx-auto text-gray-600 mb-3"></i><p class="text-gray-400">Nenhum integrante cadastrado.</p></div>`;
             } else {
                 html += state.team.map(member => {
                     const mClients = state.clients.filter(c => c.assignedMemberId === member.id && c.status !== 'Churn');
@@ -547,31 +631,31 @@
                     const lucro = mrrMcGerado - mCost;
                     
                     return `
-                    <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 relative group hover:border-[#444] transition-colors">
-                        <div class="absolute top-4 right-4 flex gap-2">
-                            <button onclick="window.appActions.openTeamModal('${member.id}')" class="p-1.5 bg-[#2a2a2a] rounded text-gray-400 hover:text-white"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-                            <button onclick="window.appActions.deleteTeam('${member.id}')" class="p-1.5 bg-[#2a2a2a] rounded text-gray-400 hover:text-red-500"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                    <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="window.appActions.openTeamModal('${member.id}')" class="p-1.5 bg-[#2a2a2a] rounded text-gray-400 hover:text-white hover:bg-gray-600 transition-colors"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
+                            <button onclick="window.appActions.deleteTeam('${member.id}')" class="p-1.5 bg-[#2a2a2a] rounded text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                         </div>
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="w-12 h-12 bg-red-900/30 border border-red-500/50 rounded-full flex items-center justify-center text-xl font-bold text-red-400">${member.name.charAt(0).toUpperCase()}</div>
-                            <div><h3 class="font-bold text-lg text-white">${member.name}</h3><p class="text-sm text-gray-400">${member.role || 'Membro'}</p></div>
+                            <div class="w-14 h-14 bg-red-900/30 border-2 border-red-500/50 rounded-full flex items-center justify-center text-2xl font-bold text-red-400 shadow-inner">${member.name.charAt(0).toUpperCase()}</div>
+                            <div><h3 class="font-bold text-lg text-white">${member.name}</h3><p class="text-sm text-gray-400 bg-[#2a2a2a] px-2 py-0.5 rounded inline-block mt-1">${member.role || 'Membro'}</p></div>
                         </div>
                         <div class="space-y-3">
                             <div class="flex justify-between text-sm"><span class="text-gray-500">Custo Mensal:</span><span class="text-red-400 font-medium">${formatCurrency(mCost)}</span></div>
                             <div class="flex justify-between text-sm"><span class="text-gray-500">MRR MC Gerado:</span><span class="text-emerald-400 font-medium">${formatCurrency(mrrMcGerado)}</span></div>
-                            <div class="pt-3 border-t border-[#2a2a2a] flex justify-between items-center"><span class="text-sm font-bold text-white">Lucro:</span><span class="font-bold text-lg ${lucro>=0?'text-emerald-500':'text-red-500'}">${formatCurrency(lucro)}</span></div>
+                            <div class="pt-3 border-t border-[#2a2a2a] flex justify-between items-center"><span class="text-sm font-bold text-white">Lucro Pessoal:</span><span class="font-bold text-lg ${lucro>=0?'text-emerald-500':'text-red-500'} bg-black/30 px-2 py-1 rounded">${formatCurrency(lucro)}</span></div>
                         </div>
                         <div class="mt-4 pt-4 border-t border-[#2a2a2a]">
-                            <p class="text-xs text-gray-500 mb-2 uppercase">Projetos (${mClients.length})</p>
+                            <p class="text-xs text-gray-500 mb-2 uppercase font-medium">Projetos Ativos (${mClients.length})</p>
                             <div class="flex flex-wrap gap-1.5">
-                                ${mClients.map(c => `<span class="text-xs bg-[#0a0a0a] border border-[#333] text-gray-300 px-2 py-1 rounded">${c.name} (${c.memberPercentage||100}%)</span>`).join('')}
-                                ${mClients.length===0 ? '<span class="text-xs text-gray-600">Nenhum</span>':''}
+                                ${mClients.map(c => `<span class="text-[10px] uppercase font-bold tracking-wider bg-[#222] border border-[#333] text-gray-300 px-2 py-1 rounded-full">${c.name} <span class="text-red-500">${c.memberPercentage||100}%</span></span>`).join('')}
+                                ${mClients.length===0 ? '<span class="text-xs text-gray-600 italic">Nenhum projeto atual</span>':''}
                             </div>
                         </div>
                     </div>`;
                 }).join('');
             }
-            return html + '</div>';
+            return html + '</div></div>';
         }
 
         function getClosureHTML() {
@@ -579,21 +663,24 @@
             const isLocked = state.closures.some(c => c.month === state.selectedMonth && c.locked);
             
             let html = `
-                <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl overflow-hidden relative">
-                    <div class="p-6 border-b border-[#2a2a2a] bg-[#1a1a1a] flex justify-between items-center">
-                        <div><h2 class="text-xl font-bold text-white">Fechamento: ${state.selectedMonth}</h2><p class="text-sm text-gray-400 mt-1">Acompanhamento de Previsto vs Realizado.</p></div>
-                        ${isLocked ? `<div class="bg-red-900/30 text-red-400 border border-red-500/50 px-3 py-1 rounded text-sm font-bold flex items-center gap-2"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Travado</div>` : ''}
+                <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl overflow-hidden relative shadow-lg animate-fade-in">
+                    <div class="p-6 border-b border-[#2a2a2a] bg-[#1a1a1a] flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                        <div><h2 class="text-xl font-bold text-white">Fechamento Oficial: <span class="text-red-500">${state.selectedMonth}</span></h2><p class="text-sm text-gray-400 mt-1">Confronte o que foi previsto com o que realmente entrou no caixa.</p></div>
+                        ${isLocked ? `<div class="bg-red-900/30 text-red-400 border border-red-500/50 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 shadow-inner"><i data-lucide="lock" class="w-4 h-4"></i> Mês Travado & Salvo</div>` : ''}
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
-                            <thead><tr class="bg-[#0a0a0a] border-b border-[#2a2a2a] text-xs uppercase text-gray-500">
+                            <thead><tr class="bg-[#0a0a0a] border-b border-[#2a2a2a] text-xs uppercase tracking-wider text-gray-500">
                                 <th class="p-4 font-medium">Cliente</th><th class="p-4">Previsto MRR</th><th class="p-4">Realizado MRR</th>
-                                <th class="p-4">Previsto O.T.</th><th class="p-4">Realizado O.T.</th><th class="p-4">Margem MC Total</th><th class="p-4 text-center">Status</th>
+                                <th class="p-4">Previsto O.T.</th><th class="p-4">Realizado O.T.</th><th class="p-4">Margem MC (Entrada)</th><th class="p-4 text-center">Status</th>
                             </tr></thead>
                             <tbody class="divide-y divide-[#2a2a2a]">
             `;
 
-            state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id))).forEach(client => {
+            const validClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
+            if(validClients.length === 0) html += `<tr><td colspan="7" class="p-8 text-center text-gray-500">Nenhum cliente ativo para faturar neste mês.</td></tr>`;
+
+            validClients.forEach(client => {
                 const cTrans = moTrans.filter(t => t.clientId === client.id);
                 const recT = cTrans.find(t => t.type === 'recorrente');
                 const otT = cTrans.find(t => t.type === 'onetime');
@@ -604,60 +691,133 @@
                 const isPend = (pR>0 && rR===0) || (pO>0 && rO===0);
                 
                 html += `
-                    <tr class="hover:bg-[#1a1a1a] text-sm">
-                        <td class="p-4 font-medium text-white">${client.name} ${client.status==='Churn'?'<span class="text-red-500 text-xs ml-2">(Churn)</span>':''}</td>
+                    <tr class="hover:bg-[#1a1a1a] text-sm transition-colors">
+                        <td class="p-4 font-medium text-white">${client.name} ${client.status==='Churn'?'<span class="text-red-500 text-[10px] bg-red-900/20 px-1 rounded ml-2 uppercase tracking-wide border border-red-900/50">Churn</span>':''}</td>
                         <td class="p-4 text-gray-400">${formatCurrency(pR)}</td>
-                        <td class="p-4 ${rR>0?'text-emerald-400':'text-gray-600'}">${formatCurrency(rR)}</td>
+                        <td class="p-4 ${rR>0?'text-emerald-400 font-medium':'text-gray-600'}">${formatCurrency(rR)}</td>
                         <td class="p-4 text-gray-400">${formatCurrency(pO)}</td>
-                        <td class="p-4 ${rO>0?'text-emerald-400':'text-gray-600'}">${formatCurrency(rO)}</td>
-                        <td class="p-4 text-red-400 font-bold">${formatCurrency(mTotal)}</td>
-                        <td class="p-4 text-center">${isPaid &&(pR>0||pO>0)?'<span class="bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-xs">Ok</span>' : isPend ? '<span class="bg-amber-500/10 text-amber-500 px-2 py-1 rounded text-xs">Pendente</span>' : '-'}</td>
+                        <td class="p-4 ${rO>0?'text-emerald-400 font-medium':'text-gray-600'}">${formatCurrency(rO)}</td>
+                        <td class="p-4 text-red-400 font-bold bg-[#111]">${formatCurrency(mTotal)}</td>
+                        <td class="p-4 text-center">${isPaid &&(pR>0||pO>0)?'<span class="bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-1 rounded text-xs inline-flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Pago</span>' : isPend ? '<span class="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-1 rounded text-xs inline-flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> Pendente</span>' : '<span class="text-gray-600">-</span>'}</td>
                     </tr>
                 `;
             });
             html += `</tbody></table></div>
-                <div class="p-6 bg-[#0a0a0a] border-t border-[#2a2a2a] flex justify-end gap-4 items-center">
-                    <span id="lock-msg" class="text-emerald-400 text-sm font-medium hidden">Salvo no Histórico!</span>
-                    <button onclick="window.appActions.lockMonth()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium flex items-center gap-2"><i data-lucide="save" class="w-4 h-4"></i> ${isLocked ? 'Atualizar Travamento' : 'Travar Mês'}</button>
+                <div class="p-6 bg-[#0a0a0a] border-t border-[#2a2a2a] flex flex-col md:flex-row justify-end gap-4 items-center">
+                    <span id="lock-msg" class="text-emerald-400 text-sm font-medium hidden flex items-center gap-1 animate-fade-in"><i data-lucide="check-circle" class="w-4 h-4"></i> Mês Salvo no Histórico!</span>
+                    <button onclick="window.appActions.lockMonth()" class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-transform shadow-lg shadow-red-900/30 hover:scale-105"><i data-lucide="${isLocked ? 'refresh-cw' : 'save'}" class="w-5 h-5"></i> ${isLocked ? 'Atualizar Travamento' : 'Travar Mês e Gerar Histórico'}</button>
                 </div></div>`;
             return html;
         }
 
         function getHistoryHTML() {
             let html = `
-                <div class="flex justify-between items-center mb-6">
-                    <div><h2 class="text-xl font-bold text-white">Histórico Anual Consolidado</h2><p class="text-sm text-gray-400 mt-1">Edite ou adicione meses passados para manter seu DFC sempre correto.</p></div>
-                    <button onclick="window.appActions.openHistoryModal()" class="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar Mês Antigo</button>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div class="animate-fade-in">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <div><h2 class="text-xl font-bold text-white">Histórico Anual Consolidado</h2><p class="text-sm text-gray-400 mt-1">Os meses que você travou no fechamento ficam armazenados aqui.</p></div>
+                        <button onclick="window.appActions.openHistoryModal()" class="w-full md:w-auto bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center justify-center gap-2 hover:bg-gray-200 transition-transform hover:scale-105"><i data-lucide="calendar-plus" class="w-4 h-4"></i> Add Mês Antigo</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             `;
             if(state.closures.length === 0) {
-                html += `<div class="col-span-full py-16 text-center border border-dashed border-[#333] rounded-xl bg-[#0a0a0a]"><i data-lucide="history" class="w-8 h-8 mx-auto text-gray-600 mb-3"></i><p class="text-gray-400">Nenhum mês travado no histórico ainda.</p></div>`;
+                html += `<div class="col-span-full py-20 text-center border border-dashed border-[#333] rounded-xl bg-[#141414]"><i data-lucide="history" class="w-10 h-10 mx-auto text-gray-600 mb-4"></i><p class="text-gray-300 font-medium">Seu histórico está vazio.</p><p class="text-sm text-gray-500 mt-1">Trave o mês na aba "Fechamento" para construir sua análise anual.</p></div>`;
             } else {
                 html += state.closures.map(c => `
-                    <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 relative hover:border-[#444] transition-colors">
-                        <button onclick="window.appActions.openHistoryModal('${c.month}')" class="absolute top-4 right-4 p-2 bg-[#2a2a2a] rounded text-gray-400 hover:text-white"><i data-lucide="pencil" class="w-3.5 h-3.5"></i></button>
-                        <div class="flex items-center gap-3 mb-6"><div class="w-10 h-10 bg-[#2a2a2a] rounded-lg flex items-center justify-center text-gray-300"><i data-lucide="history" class="w-5 h-5"></i></div><h3 class="font-bold text-xl text-white tracking-widest">${c.month}</h3></div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div><span class="text-xs text-gray-500 uppercase">MRR Bruto</span><p class="font-medium text-white">${formatCurrency(c.mrrBrutoRealizado)}</p></div>
-                            <div><span class="text-xs text-red-500 font-bold uppercase">Margem (MC)</span><p class="font-bold text-white">${formatCurrency(c.margemTotalRealizada)}</p></div>
+                    <div class="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 relative group hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/10">
+                        <button onclick="window.appActions.openHistoryModal('${c.month}')" class="absolute top-4 right-4 p-2 bg-[#2a2a2a] rounded text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-gray-600 transition-all"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <div class="flex items-center gap-4 mb-6"><div class="w-12 h-12 bg-[#2a2a2a] rounded-xl flex items-center justify-center text-gray-300 shadow-inner group-hover:bg-red-900/30 group-hover:text-red-400 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></div>
+                        <div><h3 class="font-bold text-2xl text-white tracking-widest">${c.month}</h3><span class="text-xs text-emerald-500 flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Travado</span></div></div>
+                        <div class="grid grid-cols-2 gap-4 mb-4 bg-[#0a0a0a] p-3 rounded-lg border border-[#222]">
+                            <div><span class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">MRR Bruto</span><p class="font-medium text-white">${formatCurrency(c.mrrBrutoRealizado)}</p></div>
+                            <div><span class="text-[10px] text-red-500 font-bold uppercase tracking-wider">Margem (MC)</span><p class="font-bold text-white">${formatCurrency(c.margemTotalRealizada)}</p></div>
                         </div>
                         <div class="grid grid-cols-2 gap-4 pt-4 border-t border-[#2a2a2a]">
-                            <div><span class="text-xs text-gray-500 uppercase">Custos Totais</span><p class="font-medium text-red-400">-${formatCurrency(c.custosTotais)}</p></div>
-                            <div><span class="text-xs text-gray-500 uppercase">Lucro Líquido</span><p class="font-bold text-lg ${c.lucroLiquido>=0?'text-emerald-500':'text-red-500'}">${formatCurrency(c.lucroLiquido)}</p></div>
+                            <div><span class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Custos</span><p class="font-medium text-red-400">-${formatCurrency(c.custosTotais)}</p></div>
+                            <div><span class="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Lucro Final</span><p class="font-bold text-xl ${c.lucroLiquido>=0?'text-emerald-500':'text-red-500'}">${formatCurrency(c.lucroLiquido)}</p></div>
                         </div>
                     </div>
                 `).join('');
             }
-            return html + '</div>';
+            return html + '</div></div>';
+        }
+
+        function getProfileHTML() {
+            const userName = state.user?.displayName || '';
+            const userEmail = state.user?.email || 'Acesso Visitante (Anônimo)';
+            const photoInitial = userName ? userName.charAt(0).toUpperCase() : (userEmail !== 'Acesso Visitante (Anônimo)' ? userEmail.charAt(0).toUpperCase() : 'V');
+            
+            return `
+                <div class="max-w-2xl mx-auto bg-[#141414] border border-[#2a2a2a] rounded-2xl shadow-xl overflow-hidden animate-fade-in">
+                    <div class="h-32 bg-gradient-to-r from-red-900 to-black relative"></div>
+                    <div class="px-8 pb-8 relative">
+                        <!-- Avatar e Info -->
+                        <div class="flex flex-col sm:flex-row items-center sm:items-end gap-6 -mt-16 mb-8 text-center sm:text-left">
+                            <div class="w-32 h-32 bg-[#0a0a0a] border-4 border-[#141414] rounded-full flex items-center justify-center text-5xl font-bold text-red-500 shadow-xl overflow-hidden relative group">
+                                ${state.user?.photoURL ? `<img src="${state.user.photoURL}" alt="Profile" class="w-full h-full object-cover"/>` : photoInitial}
+                                <label for="profile-photo-upload" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity backdrop-blur-sm">
+                                    <i data-lucide="camera" class="text-white w-8 h-8"></i>
+                                </label>
+                                <input type="file" id="profile-photo-upload" accept="image/*" class="hidden" onchange="window.appActions.updateProfilePhoto(this)">
+                            </div>
+                            <div class="mb-2">
+                                <h2 class="text-3xl font-bold text-white tracking-tight">${userName || 'Visitante'}</h2>
+                                <p class="text-gray-400 font-medium">${userEmail}</p>
+                            </div>
+                        </div>
+
+                        <!-- Form de Edição -->
+                        <div class="space-y-6 bg-[#0a0a0a] p-6 rounded-xl border border-[#2a2a2a]">
+                            <div class="flex items-center gap-2 mb-4 border-b border-[#2a2a2a] pb-2">
+                                <i data-lucide="user-cog" class="text-red-500 w-5 h-5"></i>
+                                <h3 class="text-lg font-bold text-white">Configurações da Conta</h3>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Nome de Exibição</label>
+                                <input type="text" id="profile-name" value="${userName}" class="w-full bg-[#141414] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="Seu nome" />
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Atualizar Senha <span class="text-[10px] text-gray-600 normal-case font-normal">(Opcional)</span></label>
+                                <input type="password" id="profile-password" class="w-full bg-[#141414] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="Digite a nova senha se quiser alterar..." />
+                            </div>
+                            
+                            <div id="profile-msg" class="hidden rounded p-3 text-sm font-medium animate-fade-in"></div>
+
+                            <div class="pt-4 border-t border-[#2a2a2a] flex flex-col sm:flex-row gap-4 justify-between items-center">
+                                <button onclick="window.appActions.logout()" class="w-full sm:w-auto text-red-500 hover:text-white hover:bg-red-600 border border-red-900 px-6 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 transition-all">
+                                    <i data-lucide="log-out" class="w-4 h-4"></i> Sair do Aplicativo
+                                </button>
+                                
+                                <button id="btn-save-profile" onclick="window.appActions.saveProfile()" class="w-full sm:w-auto bg-white text-black px-8 py-2.5 rounded-lg font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-transform hover:scale-105 shadow-lg">
+                                    <i data-lucide="save" class="w-4 h-4"></i> Salvar Alterações
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // --- AÇÕES DO APLICATIVO ---
         window.appActions = {
-            changeTab: (tab) => { state.activeTab = tab; updateApp(); },
+            changeTab: (tab) => { 
+                state.activeTab = tab; 
+                if(window.innerWidth < 768) {
+                    document.getElementById('sidebar').classList.add('-translate-x-full');
+                    document.getElementById('sidebar-overlay').classList.add('hidden');
+                }
+                updateApp(); 
+            },
             setClientFilter: (filter) => { state.clientFilter = filter; updateApp(); },
             
-            // Controle de Botões de Loading
+            toggleMobileMenu: () => {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.toggle('-translate-x-full');
+                overlay.classList.toggle('hidden');
+            },
+
             setLoading: (isLoading, btnId) => {
                 const btn = document.getElementById(btnId);
                 if (!btn) return;
@@ -671,11 +831,10 @@
                 }
             },
 
-            // Controle de Autenticação na UI
             toggleAuthMode: () => {
                 state.isSignUpMode = !state.isSignUpMode;
                 document.getElementById('name-field').classList.toggle('hidden', !state.isSignUpMode);
-                document.getElementById('btn-action').innerText = state.isSignUpMode ? 'Criar Conta' : 'Entrar';
+                document.getElementById('btn-action').innerText = state.isSignUpMode ? 'Criar Conta e Entrar' : 'Entrar';
                 document.getElementById('toggle-auth-text').innerText = state.isSignUpMode ? 'Já tem uma conta?' : 'Não tem uma conta?';
                 document.querySelector('#toggle-auth-text + button').innerText = state.isSignUpMode ? 'Fazer login' : 'Criar conta';
                 document.getElementById('login-error').classList.add('hidden');
@@ -693,7 +852,7 @@
                     window.appActions.setLoading(true, 'btn-action');
                     
                     if (state.isSignUpMode) {
-                        if (!name) throw new Error("Por favor, preencha seu nome.");
+                        if (!name) throw new Error("Por favor, preencha seu nome para prosseguirmos.");
                         const cred = await createUserWithEmailAndPassword(auth, email, password);
                         await updateProfile(cred.user, { displayName: name });
                     } else {
@@ -701,9 +860,9 @@
                     }
                 } catch(e) {
                     let msg = "Erro na autenticação.";
-                    if(e.code === 'auth/invalid-email') msg = "E-mail inválido.";
+                    if(e.code === 'auth/invalid-email') msg = "E-mail com formato inválido.";
                     if(e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') msg = "Credenciais incorretas.";
-                    if(e.code === 'auth/email-already-in-use') msg = "Este e-mail já está em uso.";
+                    if(e.code === 'auth/email-already-in-use') msg = "Este e-mail já está sendo utilizado.";
                     if(e.code === 'auth/weak-password') msg = "A senha deve ter pelo menos 6 caracteres.";
                     errorEl.innerText = e.message || msg;
                     errorEl.classList.remove('hidden');
@@ -716,13 +875,8 @@
                 const errorEl = document.getElementById('login-error');
                 errorEl.classList.add('hidden');
                 window.appActions.setLoading(true, 'btn-guest');
-                try {
-                    await signInAnonymously(auth);
-                } catch(e) {
-                    errorEl.innerText = "Erro ao entrar como visitante: " + e.message;
-                    errorEl.classList.remove('hidden');
-                    window.appActions.setLoading(false, 'btn-guest');
-                }
+                try { await signInAnonymously(auth); } 
+                catch(e) { errorEl.innerText = "Falha no acesso rápido: " + e.message; errorEl.classList.remove('hidden'); window.appActions.setLoading(false, 'btn-guest'); }
             },
 
             loginWithGoogle: async () => {
@@ -734,18 +888,12 @@
                     provider.setCustomParameters({ prompt: 'select_account' });
                     await signInWithPopup(auth, provider);
                 } catch(e) {
-                    console.error("Google Login Erro:", e);
-                    let msg = "Erro ao entrar com Google.";
-                    // Tratamento específico e caprichado para o erro de iframe/preview
+                    let msg = "Erro ao conectar com Google.";
                     if (e.code === 'auth/unauthorized-domain') {
-                        msg = `<strong>Proteção do Firebase:</strong><br/>O Google bloqueia pop-ups neste ambiente de preview (testes).<br/><br/>Para testar a plataforma agora, use a opção abaixo <strong>"Entrar como Visitante"</strong> ou crie uma conta com e-mail e senha.`;
-                    } else if (e.code === 'auth/popup-closed-by-user') {
-                        msg = "O login foi cancelado.";
-                    } else if (e.code === 'auth/popup-blocked') {
-                        msg = "O pop-up do Google foi bloqueado pelo seu navegador.";
-                    } else if (e.message) {
-                        msg += " " + e.message;
-                    }
+                        const domain = window.location.hostname;
+                        msg = `<strong>Segurança do Firebase:</strong><br/>Para o login do Google funcionar, adicione o domínio atual no Firebase (Authentication > Configurações > Domínios Autorizados):<br/><div class="bg-black text-red-400 p-2 rounded font-mono text-center select-all border border-red-900/50 my-2 text-xs">${domain}</div>Para testar agora, use <strong>"Acesso Rápido"</strong>.`;
+                    } else if (e.code === 'auth/popup-closed-by-user') { msg = "Login cancelado por você."; } 
+                      else if (e.code === 'auth/popup-blocked') { msg = "Pop-up bloqueado pelo navegador."; }
                     errorEl.innerHTML = msg;
                     errorEl.classList.remove('hidden');
                 } finally {
@@ -755,7 +903,59 @@
 
             logout: () => signOut(auth),
 
-            // Controle de Modais
+            // Ações do Perfil
+            saveProfile: async () => {
+                if(!state.user) return;
+                const newName = document.getElementById('profile-name').value;
+                const newPass = document.getElementById('profile-password').value;
+                const msgEl = document.getElementById('profile-msg');
+                window.appActions.setLoading(true, 'btn-save-profile');
+                
+                try {
+                    if (newName && newName !== state.user.displayName) {
+                        await updateProfile(auth.currentUser, { displayName: newName });
+                        state.user = auth.currentUser; // Update local state reference
+                        updateHeaderGreeting(); // update top UI
+                    }
+                    if (newPass) {
+                        await updatePassword(auth.currentUser, newPass);
+                        document.getElementById('profile-password').value = '';
+                    }
+                    msgEl.className = 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded p-3 text-sm font-medium animate-fade-in block mb-4';
+                    msgEl.innerHTML = '<i data-lucide="check" class="inline w-4 h-4 mr-1"></i> Perfil atualizado com sucesso!';
+                    lucide.createIcons();
+                    setTimeout(() => msgEl.classList.add('hidden'), 4000);
+                } catch(e) {
+                    msgEl.className = 'bg-red-500/10 border border-red-500/20 text-red-400 rounded p-3 text-sm font-medium animate-fade-in block mb-4';
+                    if(e.code === 'auth/requires-recent-login') {
+                        msgEl.innerHTML = 'Para mudar a senha, saia e faça login novamente por segurança.';
+                    } else {
+                        msgEl.innerHTML = 'Erro: ' + e.message;
+                    }
+                } finally {
+                    window.appActions.setLoading(false, 'btn-save-profile');
+                }
+            },
+            
+            updateProfilePhoto: async (input) => {
+                if(!state.user || !input.files || input.files.length === 0) return;
+                const file = input.files[0];
+                // Como não configuramos Storage, criaremos um DataURL (Base64) para teste (limite 1MB Firestore/Auth Profile)
+                if(file.size > 1024 * 1024) { alert("Imagem muito grande! Use imagens menores que 1MB."); return; }
+                
+                const reader = new FileReader();
+                reader.onloadend = async () => {
+                    try {
+                        await updateProfile(auth.currentUser, { photoURL: reader.result });
+                        state.user = auth.currentUser;
+                        renderContent(); // reload profile tab to show img
+                        updateHeaderGreeting(); // update sidebar
+                    } catch(e) { alert("Erro ao salvar foto: " + e.message); }
+                };
+                reader.readAsDataURL(file);
+            },
+
+            // Modais de Cadastro (Clients/Team/History)
             closeModal: () => {
                 document.getElementById('modal-backdrop').classList.add('hidden');
                 ['modal-client', 'modal-team', 'modal-history'].forEach(id => document.getElementById(id).classList.add('hidden'));
@@ -764,7 +964,7 @@
             openClientModal: (id = null) => {
                 const modal = document.getElementById('modal-client');
                 const selTeam = document.getElementById('client-assignedMemberId');
-                selTeam.innerHTML = '<option value="">Nenhum</option>' + state.team.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+                selTeam.innerHTML = '<option value="">Nenhum Integrante</option>' + state.team.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
 
                 if(id) {
                     const client = state.clients.find(c => c.id === id);
@@ -871,8 +1071,9 @@
             },
             
             deleteTeam: async (id) => {
-                if(!state.user) return;
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', id)); } catch(e) { console.error(e); }
+                if(confirm('Tem certeza que deseja excluir este integrante?')) {
+                    try { await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', id)); } catch(e) { console.error(e); }
+                }
             },
 
             openHistoryModal: (month = null) => {
@@ -880,14 +1081,14 @@
                 const monthInput = document.getElementById('history-month');
                 if(month) {
                     const closure = state.closures.find(c => c.month === month);
-                    document.getElementById('history-modal-title').innerText = 'Editar Histórico';
+                    document.getElementById('history-modal-title').innerText = 'Editar Histórico Oficial';
                     monthInput.value = closure.month;
                     monthInput.disabled = true;
                     setCurrencyInput('history-mrr', closure.mrrBrutoRealizado);
                     setCurrencyInput('history-margin', closure.margemTotalRealizada);
                     setCurrencyInput('history-cost', closure.custosTotais);
                 } else {
-                    document.getElementById('history-modal-title').innerText = 'Adicionar Mês';
+                    document.getElementById('history-modal-title').innerText = 'Adicionar Mês Passado';
                     monthInput.value = '';
                     monthInput.disabled = false;
                     setCurrencyInput('history-mrr', 0);
@@ -944,38 +1145,64 @@
                 });
 
                 const cFixo = state.team.reduce((a, c) => a + Number(c.cost||0), 0);
-                const cTotal = cFixo + 400; // 400 = fixo base terceiros, adaptável depois
+                const cTotal = cFixo + 400; // Fixo base terceiros
                 const data = { month: state.selectedMonth, mrrBrutoRealizado: tRealRec, margemTotalRealizada: tMargin, custosTotais: cTotal, lucroLiquido: tMargin - cTotal, locked: true };
 
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
                     const msg = document.getElementById('lock-msg');
-                    if(msg) { msg.classList.remove('hidden'); setTimeout(()=>msg.classList.add('hidden'), 3000); }
+                    if(msg) { msg.classList.remove('hidden'); setTimeout(()=>msg.classList.add('hidden'), 4000); }
                 } catch(e) { console.error(e); }
             }
         };
 
-        // UI Event Listeners base
+        // Inputs & Load
         document.getElementById('selected-month').addEventListener('change', (e) => {
             state.selectedMonth = e.target.value;
             updateApp();
         });
         document.getElementById('selected-month').value = state.selectedMonth;
 
+        function updateHeaderGreeting() {
+            if(!state.user) return;
+            const name = state.user.displayName || (state.user.isAnonymous ? 'Visitante' : 'Usuário');
+            const firstName = name.split(' ')[0];
+            document.getElementById('user-greeting').innerHTML = `Olá, <span class="font-bold text-white">${firstName}</span>`;
+            document.getElementById('sidebar-user-name').innerText = name;
+            
+            // Avatar
+            const avatarInitialStr = name.charAt(0).toUpperCase();
+            document.getElementById('user-avatar').innerText = avatarInitialStr;
+            
+            if(state.user.photoURL) {
+                document.getElementById('user-avatar').innerHTML = `<img src="${state.user.photoURL}" class="w-full h-full object-cover rounded-full" />`;
+                document.getElementById('sidebar-avatar-img').src = state.user.photoURL;
+                document.getElementById('sidebar-avatar-img').classList.remove('hidden');
+                document.getElementById('sidebar-avatar-initial').classList.add('hidden');
+            } else {
+                document.getElementById('user-avatar').innerHTML = avatarInitialStr;
+                document.getElementById('sidebar-avatar-initial').innerText = avatarInitialStr;
+                document.getElementById('sidebar-avatar-img').classList.add('hidden');
+                document.getElementById('sidebar-avatar-initial').classList.remove('hidden');
+            }
+        }
+
         let unsubListeners = [];
         onAuthStateChanged(auth, (user) => {
             state.user = user;
             if(user) {
-                // Atualizar o icone/avatar do usuario baseado nos dados dele
-                const avatarStr = user.displayName ? user.displayName[0].toUpperCase() : (user.email ? user.email[0].toUpperCase() : 'U');
-                document.getElementById('user-avatar').innerText = avatarStr;
-
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-screen').classList.remove('hidden');
+                updateHeaderGreeting();
+                document.getElementById('login-screen').classList.add('opacity-0');
+                setTimeout(() => {
+                    document.getElementById('login-screen').classList.add('hidden');
+                    const appScreen = document.getElementById('app-screen');
+                    appScreen.classList.remove('hidden');
+                    // timeout to allow display:block to apply before changing opacity for transition
+                    setTimeout(()=> appScreen.classList.remove('opacity-0'), 50);
+                }, 300); // tempo da animação
                 
                 unsubListeners.forEach(fn => fn()); unsubListeners = [];
                 
-                // Firestore Listeners
                 unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'clients'), s => { state.clients = s.docs.map(d => ({id: d.id, ...d.data()})); updateApp(); }));
                 unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), s => { state.transactions = s.docs.map(d => ({id: d.id, ...d.data()})); updateApp(); }));
                 unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'team'), s => { state.team = s.docs.map(d => ({id: d.id, ...d.data()})); updateApp(); }));
@@ -984,8 +1211,26 @@
                     updateApp(); 
                 }));
             } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('app-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.add('opacity-0');
+                setTimeout(() => {
+                    document.getElementById('app-screen').classList.add('hidden');
+                    const loginScreen = document.getElementById('login-screen');
+                    loginScreen.classList.remove('hidden');
+                    setTimeout(()=> loginScreen.classList.remove('opacity-0'), 50);
+                }, 300);
+                
+                state.chartInstance?.destroy();
+                state.chartInstance = null;
+            }
+        });
+        
+        // Esconder menu mobile ao redimensionar tela para desktop
+        window.addEventListener('resize', () => {
+            if(window.innerWidth >= 768) {
+                document.getElementById('sidebar').classList.remove('-translate-x-full');
+                document.getElementById('sidebar-overlay').classList.add('hidden');
+            } else {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
             }
         });
     </script>
