@@ -1,0 +1,1072 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { initializeApp } from 'firebase/app';
+import { 
+  getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut 
+} from 'firebase/auth';
+import { 
+  getFirestore, collection, doc, setDoc, getDocs, onSnapshot, query, addDoc, updateDoc, deleteDoc, where 
+} from 'firebase/firestore';
+import { 
+  LayoutDashboard, Users, Calculator, LogOut, Plus, X, Check, DollarSign, TrendingUp, AlertCircle, ChevronRight, CheckCircle2, Briefcase, Trash2, Pencil, History, Save
+} from 'lucide-react';
+
+// --- FIREBASE INITIALIZATION ---
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'squad-dfc-app';
+
+// --- UTILS ---
+const formatCurrency = (value) => {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value || 0);
+};
+
+// A fórmula mágica de Margem de Contribuição: (Vendas * 0.7075) * 0.35
+const calculateMargin = (value) => {
+  if (!value) return 0;
+  return (value * 0.7075) * 0.35;
+};
+
+const getCurrentMonthStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+};
+
+// --- COMPONENTES PRINCIPAIS ---
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Data State
+  const [clients, setClients] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [team, setTeam] = useState([]);
+  const [closures, setClosures] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthStr());
+
+  // Auth Effect
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+      } catch (error) {
+        console.error("Auth error:", error);
+      }
+    };
+    initAuth();
+
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Data Fetching Effect
+  useEffect(() => {
+    if (!user) return;
+
+    // Listeners para Clientes
+    const clientsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'clients');
+    const unsubClients = onSnapshot(clientsRef, (snapshot) => {
+      const clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setClients(clientsData);
+    }, (error) => console.error("Error fetching clients:", error));
+
+    // Listeners para Transacoes (Baixas)
+    const transRef = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
+    const unsubTrans = onSnapshot(transRef, (snapshot) => {
+      const transData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTransactions(transData);
+    }, (error) => console.error("Error fetching transactions:", error));
+
+    // Listeners para Equipe
+    const teamRef = collection(db, 'artifacts', appId, 'users', user.uid, 'team');
+    const unsubTeam = onSnapshot(teamRef, (snapshot) => {
+      const teamData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTeam(teamData);
+    }, (error) => console.error("Error fetching team:", error));
+
+    // Listeners para Histórico (Fechamentos Consolidados)
+    const closuresRef = collection(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures');
+    const unsubClosures = onSnapshot(closuresRef, (snapshot) => {
+      const closuresData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      // Ordenar do mais recente para o mais antigo
+      setClosures(closuresData.sort((a, b) => b.month.localeCompare(a.month)));
+    }, (error) => console.error("Error fetching closures:", error));
+
+    return () => {
+      unsubClients();
+      unsubTrans();
+      unsubTeam();
+      unsubClosures();
+    };
+  }, [user]);
+
+  // Funções de Negócio
+  const handleBaixa = async (clientId, clientName, value, type) => {
+    if (!user) return;
+    try {
+      const transRef = collection(db, 'artifacts', appId, 'users', user.uid, 'transactions');
+      await addDoc(transRef, {
+        clientId,
+        clientName,
+        month: selectedMonth,
+        value: value,
+        marginValue: calculateMargin(value),
+        type: type, // 'recorrente' ou 'onetime'
+        createdAt: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Erro ao dar baixa", e);
+    }
+  };
+
+  const handleRemoveBaixa = async (transactionId) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'transactions', transactionId));
+    } catch (e) {
+      console.error("Erro ao remover baixa", e);
+    }
+  };
+
+  const handleSaveClient = async (clientData) => {
+    if (!user) return;
+    try {
+      if (clientData.id) {
+        const clientRef = doc(db, 'artifacts', appId, 'users', user.uid, 'clients', clientData.id);
+        const { id, ...dataToUpdate } = clientData;
+        await updateDoc(clientRef, dataToUpdate);
+      } else {
+        const clientsRef = collection(db, 'artifacts', appId, 'users', user.uid, 'clients');
+        await addDoc(clientsRef, { ...clientData, createdAt: new Date().toISOString() });
+      }
+    } catch (e) {
+      console.error("Erro ao salvar cliente", e);
+    }
+  };
+
+  const handleSaveTeamMember = async (memberData) => {
+    if (!user) return;
+    try {
+      if (memberData.id) {
+        const memberRef = doc(db, 'artifacts', appId, 'users', user.uid, 'team', memberData.id);
+        const { id, ...dataToUpdate } = memberData;
+        await updateDoc(memberRef, dataToUpdate);
+      } else {
+        const teamRef = collection(db, 'artifacts', appId, 'users', user.uid, 'team');
+        await addDoc(teamRef, { ...memberData, createdAt: new Date().toISOString() });
+      }
+    } catch (e) {
+      console.error("Erro ao salvar membro da equipe", e);
+    }
+  };
+
+  const handleDeleteTeamMember = async (memberId) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'team', memberId));
+    } catch (e) {
+      console.error("Erro ao deletar membro", e);
+    }
+  };
+
+  const handleSaveClosure = async (closureData) => {
+    if (!user) return;
+    try {
+      // Usa o próprio mês (ex: '2025-01') como ID do documento para evitar duplicidades
+      const closureRef = doc(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures', closureData.month);
+      await setDoc(closureRef, { ...closureData, updatedAt: new Date().toISOString() }, { merge: true });
+    } catch (e) {
+      console.error("Erro ao salvar histórico do mês", e);
+    }
+  };
+
+  // Login Screen
+  if (loading) return <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center text-white">Carregando...</div>;
+  if (!user) return <LoginScreen />;
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-gray-200 font-sans flex flex-col md:flex-row">
+      {/* Sidebar Desktop / Bottom Nav Mobile */}
+      <nav className="w-full md:w-64 bg-[#141414] border-r border-[#2a2a2a] flex flex-col justify-between z-10 
+                      fixed md:relative bottom-0 md:bottom-auto h-16 md:h-screen">
+        <div className="flex md:flex-col w-full h-full">
+          <div className="hidden md:flex p-6 items-center gap-3 border-b border-[#2a2a2a]">
+            <div className="w-8 h-8 bg-red-600 rounded flex items-center justify-center font-bold text-white">S</div>
+            <span className="text-xl font-bold tracking-wider text-white">SQUAD<span className="text-red-500">DFC</span></span>
+          </div>
+          
+          <div className="flex md:flex-col w-full justify-around md:justify-start md:mt-6 p-2 md:p-4 gap-2">
+            <NavItem icon={<LayoutDashboard size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+            <NavItem icon={<Users size={20}/>} label="Clientes" active={activeTab === 'clients'} onClick={() => setActiveTab('clients')} />
+            <NavItem icon={<Briefcase size={20}/>} label="Equipe" active={activeTab === 'team'} onClick={() => setActiveTab('team')} />
+            <NavItem icon={<Calculator size={20}/>} label="Fechamento" active={activeTab === 'closure'} onClick={() => setActiveTab('closure')} />
+            <NavItem icon={<History size={20}/>} label="Histórico Anual" active={activeTab === 'history'} onClick={() => setActiveTab('history')} />
+          </div>
+        </div>
+        
+        <div className="hidden md:flex p-4 border-t border-[#2a2a2a]">
+          <button onClick={() => signOut(auth)} className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors w-full p-2">
+            <LogOut size={20} />
+            <span>Sair</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto pb-20 md:pb-0 relative">
+        <header className="bg-[#141414] border-b border-[#2a2a2a] p-4 flex justify-between items-center sticky top-0 z-10">
+          <h1 className="text-xl font-semibold text-white capitalize">
+            {activeTab === 'closure' ? 'Fechamento Mensal' : activeTab}
+          </h1>
+          <div className="flex items-center gap-4">
+            <input 
+              type="month" 
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="bg-[#2a2a2a] border border-[#444] rounded px-3 py-1.5 text-sm focus:outline-none focus:border-red-500"
+            />
+            <div className="w-8 h-8 rounded-full bg-red-900/50 border border-red-500 flex items-center justify-center text-sm font-bold text-red-200">
+              {user.email ? user.email[0].toUpperCase() : 'U'}
+            </div>
+          </div>
+        </header>
+
+        <div className="p-4 md:p-8">
+          {activeTab === 'dashboard' && <DashboardTab clients={clients} transactions={transactions} currentMonth={selectedMonth} team={team} />}
+          {activeTab === 'clients' && <ClientsTab clients={clients} onSave={handleSaveClient} transactions={transactions} currentMonth={selectedMonth} onBaixa={handleBaixa} onRemoveBaixa={handleRemoveBaixa} team={team} />}
+          {activeTab === 'team' && <TeamTab team={team} clients={clients} onSave={handleSaveTeamMember} onDelete={handleDeleteTeamMember} />}
+          {activeTab === 'closure' && <ClosureTab clients={clients} transactions={transactions} currentMonth={selectedMonth} team={team} onLockMonth={handleSaveClosure} closures={closures} />}
+          {activeTab === 'history' && <HistoryTab closures={closures} onSave={handleSaveClosure} />}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// --- SUB-COMPONENTES DE TELAS ---
+
+function DashboardTab({ clients, transactions, currentMonth, team }) {
+  // Cálculos do Mês Selecionado
+  const activeClients = clients.filter(c => c.status !== 'Churn');
+  
+  // Previsto Bruto (Soma de todos os contratos ativos)
+  const previstoMRR = activeClients.reduce((acc, curr) => acc + (Number(curr.recurringValue) || 0), 0);
+  const previstoOneTime = activeClients.reduce((acc, curr) => acc + (Number(curr.oneTimeValue) || 0), 0);
+  
+  // Realizado (Baseado nas baixas do mês)
+  const monthTransactions = transactions.filter(t => t.month === currentMonth);
+  const realizadoMRR = monthTransactions.filter(t => t.type === 'recorrente').reduce((acc, curr) => acc + curr.value, 0);
+  const realizadoOneTime = monthTransactions.filter(t => t.type === 'onetime').reduce((acc, curr) => acc + curr.value, 0);
+  const realizadoMargem = monthTransactions.reduce((acc, curr) => acc + curr.marginValue, 0);
+
+  // Custos (Dinâmico com base na aba Equipe)
+  const custoFixo = team.reduce((acc, curr) => acc + (Number(curr.cost) || 0), 0);
+  const custoVariavel = 400; // Ex: Terceiros
+  const custosTotais = custoFixo + custoVariavel;
+
+  const lucro = realizadoMargem - custosTotais;
+
+  return (
+    <div className="space-y-6">
+      {/* KPIs Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <KpiCard title="MRR Bruto (Realizado)" value={realizadoMRR} icon={<TrendingUp size={24} className="text-gray-400" />} />
+        <KpiCard title="MRR Margem (MC)" value={realizadoMargem} highlight={true} icon={<DollarSign size={24} className="text-red-500" />} />
+        <KpiCard title="Lucro Líquido" value={lucro} isPositive={lucro >= 0} icon={<CheckCircle2 size={24} className={lucro >= 0 ? "text-emerald-500" : "text-red-500"} />} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Painel de Previsibilidade */}
+        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <AlertCircle size={18} className="text-red-500"/> Previsto vs Realizado ({currentMonth})
+          </h3>
+          <div className="space-y-4">
+            <ProgressBar label="MRR (Recorrente)" previsto={previstoMRR} realizado={realizadoMRR} />
+            <ProgressBar label="Projetos (One Time)" previsto={previstoOneTime} realizado={realizadoOneTime} />
+          </div>
+        </div>
+
+        {/* Resumo de Caixa */}
+        <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6">
+          <h3 className="text-lg font-semibold mb-4">Fluxo de Caixa Simplificado</h3>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between items-center pb-2 border-b border-[#2a2a2a]">
+              <span className="text-gray-400">Entradas (Margem MC)</span>
+              <span className="font-medium text-white">{formatCurrency(realizadoMargem)}</span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-[#2a2a2a]">
+              <span className="text-gray-400">Custos Fixos da Equipe</span>
+              <span className="font-medium text-red-400">-{formatCurrency(custoFixo)}</span>
+            </div>
+            <div className="flex justify-between items-center pb-2 border-b border-[#2a2a2a]">
+              <span className="text-gray-400">Custos Variáveis (Terceiros)</span>
+              <span className="font-medium text-red-400">-{formatCurrency(custoVariavel)}</span>
+            </div>
+            <div className="flex justify-between items-center pt-2 text-lg">
+              <span className="font-bold text-white">Resultado</span>
+              <span className={`font-bold ${lucro >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                {formatCurrency(lucro)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClientsTab({ clients, onSave, transactions, currentMonth, onBaixa, onRemoveBaixa, team }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
+  const [filterPhase, setFilterPhase] = useState('Todos');
+
+  const monthTrans = transactions.filter(t => t.month === currentMonth);
+
+  const openModal = (client = null) => {
+    if (client) {
+      setEditingClient(client);
+    } else {
+      setEditingClient({
+        name: '', phase: 'Tratativa', supplier: '', serviceType: '', system: '',
+        observation: '', deliveryDate: '', oneTimeValue: 0, recurringValue: 0, nps: '', status: 'Ativo',
+        assignedMemberId: '', memberPercentage: 100
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const filteredClients = clients.filter(c => filterPhase === 'Todos' || c.phase === filterPhase);
+
+  return (
+    <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
+          {['Todos', 'Manutenção', 'Implementação', 'Tratativa'].map(phase => (
+            <button key={phase} onClick={() => setFilterPhase(phase)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap
+                ${filterPhase === phase ? 'bg-red-600 text-white' : 'bg-[#1a1a1a] text-gray-400 border border-[#333] hover:border-red-500/50'}`}>
+              {phase}
+            </button>
+          ))}
+        </div>
+        <button onClick={() => openModal()} className="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 transition-colors w-full md:w-auto justify-center">
+          <Plus size={18} /> Novo Cliente
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {filteredClients.map(client => {
+          const clientTrans = monthTrans.filter(t => t.clientId === client.id);
+          const recTrans = clientTrans.find(t => t.type === 'recorrente');
+          const otTrans = clientTrans.find(t => t.type === 'onetime');
+          const isChurn = client.status === 'Churn';
+
+          return (
+            <div key={client.id} className={`bg-[#141414] border rounded-xl p-5 relative overflow-hidden transition-all hover:border-[#444]
+              ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#2a2a2a]'}`}>
+              {isChurn && <div className="absolute top-0 right-0 bg-red-900/80 text-white text-xs px-2 py-1 rounded-bl-lg font-bold">CHURN</div>}
+              
+              <div className="cursor-pointer" onClick={() => openModal(client)}>
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h3 className="font-bold text-lg text-white">{client.name}</h3>
+                    <span className="text-xs text-red-400 bg-red-400/10 px-2 py-0.5 rounded">{client.phase}</span>
+                  </div>
+                  <ChevronRight size={18} className="text-gray-600" />
+                </div>
+                
+                <div className="space-y-1 mb-4">
+                  <p className="text-sm text-gray-400"><span className="text-gray-500">Fornecedor:</span> {client.supplier || '-'}</p>
+                  <p className="text-sm text-gray-400"><span className="text-gray-500">Sistema:</span> {client.system || '-'}</p>
+                </div>
+              </div>
+
+              {/* Botões de Baixa Rápidos */}
+              {!isChurn && (
+                <div className="pt-3 border-t border-[#2a2a2a] space-y-2">
+                  {Number(client.recurringValue) > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">MRR: {formatCurrency(client.recurringValue)}</span>
+                      {recTrans ? (
+                        <button onClick={() => onRemoveBaixa(recTrans.id)} className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1">
+                          <Check size={12}/> Recebido
+                        </button>
+                      ) : (
+                        <button onClick={(e) => { e.stopPropagation(); onBaixa(client.id, client.name, client.recurringValue, 'recorrente'); }} className="text-xs bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white px-2 py-1 rounded border border-red-500/20 transition-colors">
+                          Dar Baixa MRR
+                        </button>
+                      )}
+                    </div>
+                  )}
+                  {Number(client.oneTimeValue) > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">One Time: {formatCurrency(client.oneTimeValue)}</span>
+                      {otTrans ? (
+                        <button onClick={() => onRemoveBaixa(otTrans.id)} className="text-xs bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded border border-emerald-500/20 flex items-center gap-1">
+                          <Check size={12}/> Recebido
+                        </button>
+                      ) : (
+                        <button onClick={(e) => { e.stopPropagation(); onBaixa(client.id, client.name, client.oneTimeValue, 'onetime'); }} className="text-xs bg-gray-800 text-gray-300 hover:bg-white hover:text-black px-2 py-1 rounded border border-gray-700 transition-colors">
+                          Dar Baixa One Time
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {isModalOpen && <ClientModal client={editingClient} team={team} onClose={() => setIsModalOpen(false)} onSave={(data) => { onSave(data); setIsModalOpen(false); }} />}
+    </div>
+  );
+}
+
+function ClosureTab({ clients, transactions, currentMonth, team, onLockMonth, closures }) {
+  // Tela de Fechamento (Visualização em Tabela sofisticada)
+  const monthTrans = transactions.filter(t => t.month === currentMonth);
+  const isLocked = closures.some(c => c.month === currentMonth && c.locked);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  // Variáveis para consolidação ao travar o mês
+  let totalPrevRec = 0;
+  let totalRealRec = 0;
+  let totalMargin = 0;
+
+  const handleLock = () => {
+    // Calculamos o custo total da equipe para gravar na foto do mês
+    const custoEquipe = team.reduce((acc, curr) => acc + (Number(curr.cost) || 0), 0);
+    const custoVariavelBase = 400; // Valor de terceiros padrão ou ajustável depois
+    const custoTotal = custoEquipe + custoVariavelBase;
+
+    onLockMonth({
+      month: currentMonth,
+      mrrBrutoRealizado: totalRealRec,
+      margemTotalRealizada: totalMargin,
+      custosTotais: custoTotal,
+      lucroLiquido: totalMargin - custoTotal,
+      locked: true
+    });
+
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 3000);
+  };
+  
+  return (
+    <div className="bg-[#141414] border border-[#2a2a2a] rounded-xl overflow-hidden relative">
+      <div className="p-6 border-b border-[#2a2a2a] bg-[#1a1a1a] flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-bold text-white">Fechamento: {currentMonth}</h2>
+          <p className="text-sm text-gray-400 mt-1">Acompanhamento de Previsto vs Realizado para garantir o caixa do mês.</p>
+        </div>
+        {isLocked && (
+          <div className="bg-red-900/30 text-red-400 border border-red-500/50 px-3 py-1 rounded text-sm font-bold flex items-center gap-2">
+            <CheckCircle2 size={16} /> Mês Travado e Salvo
+          </div>
+        )}
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-[#0a0a0a] border-b border-[#2a2a2a] text-xs uppercase tracking-wider text-gray-500">
+              <th className="p-4 font-medium">Cliente</th>
+              <th className="p-4 font-medium">Previsto MRR</th>
+              <th className="p-4 font-medium">Realizado MRR</th>
+              <th className="p-4 font-medium">Previsto O.T.</th>
+              <th className="p-4 font-medium">Realizado O.T.</th>
+              <th className="p-4 font-medium">Margem MC Total</th>
+              <th className="p-4 font-medium text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#2a2a2a]">
+            {clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && monthTrans.some(t => t.clientId === c.id))).map(client => {
+              const cTrans = monthTrans.filter(t => t.clientId === client.id);
+              const recTrans = cTrans.find(t => t.type === 'recorrente');
+              const otTrans = cTrans.find(t => t.type === 'onetime');
+              
+              const prevRec = Number(client.recurringValue) || 0;
+              const prevOt = Number(client.oneTimeValue) || 0;
+              const realRec = recTrans ? recTrans.value : 0;
+              const realOt = otTrans ? otTrans.value : 0;
+              
+              const rowMargin = (recTrans ? recTrans.marginValue : 0) + (otTrans ? otTrans.marginValue : 0);
+              const isFullyPaid = (prevRec === 0 || realRec > 0) && (prevOt === 0 || realOt > 0);
+              const isPending = (prevRec > 0 && realRec === 0) || (prevOt > 0 && realOt === 0);
+
+              // Somando para o consolidado
+              totalPrevRec += prevRec;
+              totalRealRec += realRec;
+              totalMargin += rowMargin;
+
+              return (
+                <tr key={client.id} className="hover:bg-[#1a1a1a] transition-colors text-sm">
+                  <td className="p-4 font-medium text-white">{client.name} {client.status === 'Churn' && <span className="text-red-500 text-xs ml-2">(Churn)</span>}</td>
+                  <td className="p-4 text-gray-400">{formatCurrency(prevRec)}</td>
+                  <td className={`p-4 ${realRec > 0 ? 'text-emerald-400 font-medium' : 'text-gray-600'}`}>{formatCurrency(realRec)}</td>
+                  <td className="p-4 text-gray-400">{formatCurrency(prevOt)}</td>
+                  <td className={`p-4 ${realOt > 0 ? 'text-emerald-400 font-medium' : 'text-gray-600'}`}>{formatCurrency(realOt)}</td>
+                  <td className="p-4 text-red-400 font-bold">{formatCurrency(rowMargin)}</td>
+                  <td className="p-4 text-center">
+                    {isFullyPaid && (prevRec > 0 || prevOt > 0) ? (
+                      <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 px-2 py-1 rounded text-xs">
+                        <Check size={12}/> Ok
+                      </span>
+                    ) : isPending ? (
+                      <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-500 px-2 py-1 rounded text-xs">
+                        Pendente
+                      </span>
+                    ) : (
+                      <span className="text-gray-600 text-xs">-</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <div className="p-6 bg-[#0a0a0a] border-t border-[#2a2a2a] flex justify-end items-center gap-4">
+        {showSuccess && <span className="text-emerald-400 text-sm font-medium">Salvo no Histórico!</span>}
+        <button 
+          onClick={handleLock}
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+           <Save size={18}/> {isLocked ? 'Atualizar Travamento' : 'Travar Mês (Fechamento)'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ClientModal({ client, team, onClose, onSave }) {
+  const [formData, setFormData] = useState(client);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const margemRecorrente = calculateMargin(formData.recurringValue);
+  const margemOneTime = calculateMargin(formData.oneTimeValue);
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+        <div className="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414] z-10">
+          <h2 className="text-2xl font-bold text-white">{formData.id ? 'Editar Cliente' : 'Novo Cliente'}</h2>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] rounded-full"><X size={20}/></button>
+        </div>
+        
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+          {/* Coluna 1 */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Nome do Cliente</label>
+              <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Fase</label>
+                <select name="phase" value={formData.phase} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none">
+                  <option>Tratativa</option><option>Implementação</option><option>Manutenção</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Status</label>
+                <select name="status" value={formData.status} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none">
+                  <option>Ativo</option><option>Churn</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Fornecedor</label>
+                <input name="supplier" value={formData.supplier} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Sistema</label>
+                <input name="system" value={formData.system} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Tipo de Serviço</label>
+              <input name="serviceType" value={formData.serviceType} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+            </div>
+
+            {/* Atribuição de Equipe */}
+            <div className="grid grid-cols-2 gap-4 mt-4 p-4 border border-[#333] rounded-lg bg-[#0a0a0a]">
+              <div className="col-span-2">
+                <label className="block text-xs font-medium text-red-500 mb-1 uppercase tracking-wider">Responsável (Equipe)</label>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Integrante</label>
+                <select name="assignedMemberId" value={formData.assignedMemberId || ''} onChange={handleChange} className="w-full bg-[#141414] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none">
+                  <option value="">Nenhum</option>
+                  {team && team.map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">% Atribuída</label>
+                <input type="number" min="0" max="100" name="memberPercentage" value={formData.memberPercentage || 100} onChange={handleChange} className="w-full bg-[#141414] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" />
+              </div>
+            </div>
+
+          </div>
+
+          {/* Coluna 2: Financeiro */}
+          <div className="space-y-4 bg-[#1a1a1a] p-5 rounded-xl border border-[#2a2a2a]">
+            <h3 className="text-sm font-bold text-red-500 mb-4 border-b border-[#333] pb-2">Dados Financeiros</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Valor Recorrente (MRR)</label>
+                <CurrencyInput name="recurringValue" value={formData.recurringValue} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Margem (Auto)</label>
+                <div className="w-full bg-[#0a0a0a]/50 border border-[#333] rounded p-2 text-emerald-400 font-mono">{formatCurrency(margemRecorrente)}</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Valor One Time</label>
+                <CurrencyInput name="oneTimeValue" value={formData.oneTimeValue} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Margem (Auto)</label>
+                <div className="w-full bg-[#0a0a0a]/50 border border-[#333] rounded p-2 text-emerald-400 font-mono">{formatCurrency(margemOneTime)}</div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-[#333]">
+              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Data de Entrega</label>
+              <input type="date" name="deliveryDate" value={formData.deliveryDate} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" style={{colorScheme: 'dark'}} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase">Nota NPS</label>
+              <input type="number" max="10" min="0" name="nps" value={formData.nps} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2 text-white focus:border-red-500 focus:outline-none" />
+            </div>
+          </div>
+          
+          {/* Observações ocupando largura total */}
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Observações / Motivo Churn</label>
+            <textarea name="observation" value={formData.observation} onChange={handleChange} rows="3" className="w-full bg-[#0a0a0a] border border-[#333] rounded p-3 text-white focus:border-red-500 focus:outline-none resize-none"></textarea>
+          </div>
+        </div>
+        
+        <div className="p-6 border-t border-[#2a2a2a] bg-[#141414] flex justify-end gap-3 sticky bottom-0">
+          <button onClick={onClose} className="px-5 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+          <button onClick={() => onSave(formData)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-red-900/30">
+            Salvar Cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- COMPONENTES AUXILIARES DE UI ---
+function KpiCard({ title, value, highlight, icon, isPositive }) {
+  return (
+    <div className={`p-6 rounded-xl border ${highlight ? 'bg-red-900/10 border-red-500/30' : 'bg-[#141414] border-[#2a2a2a]'}`}>
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="text-gray-400 text-sm font-medium">{title}</h3>
+        {icon}
+      </div>
+      <div className={`text-3xl font-bold ${highlight ? 'text-white' : isPositive === false ? 'text-red-500' : 'text-white'}`}>
+        {formatCurrency(value)}
+      </div>
+    </div>
+  );
+}
+
+function ProgressBar({ label, previsto, realizado }) {
+  const percent = previsto > 0 ? Math.min(100, Math.round((realizado / previsto) * 100)) : 0;
+  return (
+    <div>
+      <div className="flex justify-between text-sm mb-1">
+        <span className="text-gray-300">{label}</span>
+        <span className="text-gray-400">{formatCurrency(realizado)} / {formatCurrency(previsto)}</span>
+      </div>
+      <div className="h-2 w-full bg-[#2a2a2a] rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-red-600 transition-all duration-500" 
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+function NavItem({ icon, label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all
+        ${active ? 'bg-red-600 text-white font-medium shadow-lg shadow-red-900/20' : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-white'}`}
+    >
+      {icon}
+      <span className="hidden md:block">{label}</span>
+    </button>
+  );
+}
+
+function CurrencyInput({ name, value, onChange, className, disabled, placeholder }) {
+  const displayValue = useMemo(() => {
+    if (value === null || value === undefined || value === '') return '';
+    const num = Number(value);
+    if (isNaN(num)) return '';
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }, [value]);
+
+  const handleChange = (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val === '') {
+      onChange({ target: { name, value: 0 } });
+      return;
+    }
+    const numValue = Number(val) / 100;
+    onChange({ target: { name, value: numValue } });
+  };
+
+  return (
+    <div className="relative w-full">
+      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
+      <input
+        type="text"
+        name={name}
+        value={displayValue}
+        onChange={handleChange}
+        placeholder={placeholder}
+        disabled={disabled}
+        className={`${className} pl-9`}
+      />
+    </div>
+  );
+}
+
+// --- ABA DE HISTÓRICO ANUAL ---
+function HistoryTab({ closures, onSave }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingClosure, setEditingClosure] = useState(null);
+
+  const openModal = (closure = null) => {
+    if (closure) {
+      setEditingClosure(closure);
+    } else {
+      setEditingClosure({
+        month: '', mrrBrutoRealizado: 0, margemTotalRealizada: 0, custosTotais: 0, lucroLiquido: 0, locked: true
+      });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleSaveModal = (data) => {
+    // Calcula lucro automaticamente se não foi editado
+    const lucro = Number(data.margemTotalRealizada) - Number(data.custosTotais);
+    onSave({ ...data, lucroLiquido: lucro, locked: true });
+    setIsModalOpen(false);
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-bold text-white">Histórico Anual Consolidado</h2>
+          <p className="text-sm text-gray-400 mt-1">Edite ou adicione meses passados para manter seu DFC sempre correto.</p>
+        </div>
+        <button onClick={() => openModal()} className="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 transition-colors">
+          <Plus size={18} /> Adicionar Mês Antigo
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {closures.map(closure => (
+          <div key={closure.id} className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 relative group hover:border-[#444] transition-colors">
+            <div className="absolute top-4 right-4">
+              <button onClick={() => openModal(closure)} className="p-2 bg-[#2a2a2a] rounded text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"><Pencil size={14}/></button>
+            </div>
+            
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-[#2a2a2a] rounded-lg flex items-center justify-center text-gray-300">
+                <History size={20}/>
+              </div>
+              <h3 className="font-bold text-xl text-white tracking-widest">{closure.month}</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <span className="text-xs text-gray-500 uppercase">MRR Bruto</span>
+                <p className="font-medium text-white">{formatCurrency(closure.mrrBrutoRealizado)}</p>
+              </div>
+              <div>
+                <span className="text-xs text-red-500 font-bold uppercase">Margem (MC)</span>
+                <p className="font-bold text-white">{formatCurrency(closure.margemTotalRealizada)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#2a2a2a]">
+              <div>
+                <span className="text-xs text-gray-500 uppercase">Custos Totais</span>
+                <p className="font-medium text-red-400">-{formatCurrency(closure.custosTotais)}</p>
+              </div>
+              <div>
+                <span className="text-xs text-gray-500 uppercase">Lucro Líquido</span>
+                <p className={`font-bold text-lg ${closure.lucroLiquido >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                  {formatCurrency(closure.lucroLiquido)}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {closures.length === 0 && (
+          <div className="col-span-full py-16 text-center border border-dashed border-[#333] rounded-xl bg-[#0a0a0a]">
+            <History size={32} className="mx-auto text-gray-600 mb-3" />
+            <p className="text-gray-400">Nenhum mês travado no histórico ainda.</p>
+            <p className="text-sm text-gray-500 mt-2">Faça o fechamento de um mês ou adicione manualmente.</p>
+          </div>
+        )}
+      </div>
+
+      {isModalOpen && <HistoryModal closure={editingClosure} onClose={() => setIsModalOpen(false)} onSave={handleSaveModal} />}
+    </div>
+  );
+}
+
+function HistoryModal({ closure, onClose, onSave }) {
+  const [formData, setFormData] = useState(closure);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="p-6 border-b border-[#2a2a2a] flex justify-between items-center">
+          <h2 className="text-xl font-bold text-white">{formData.id ? 'Editar Histórico' : 'Adicionar Mês ao Histórico'}</h2>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] rounded-full"><X size={20}/></button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Mês de Referência</label>
+            <input type="month" name="month" value={formData.month} onChange={handleChange} disabled={!!formData.id} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none disabled:opacity-50" />
+            {!formData.id && <p className="text-xs text-red-500 mt-1">Atenção: Ao salvar, isso será fixado no histórico.</p>}
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">MRR Bruto (R$)</label>
+              <CurrencyInput name="mrrBrutoRealizado" value={formData.mrrBrutoRealizado} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-red-500 mb-1 uppercase tracking-wider">MRR Margem / MC (R$)</label>
+              <CurrencyInput name="margemTotalRealizada" value={formData.margemTotalRealizada} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white border-red-500/30 focus:border-red-500 focus:outline-none" />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Custos Totais (Equipe + Terceiros)</label>
+            <CurrencyInput name="custosTotais" value={formData.custosTotais} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+          </div>
+        </div>
+        
+        <div className="p-6 border-t border-[#2a2a2a] bg-[#1a1a1a] flex justify-end gap-3">
+          <button onClick={onClose} className="px-5 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+          <button onClick={() => onSave(formData)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-red-900/30">
+            Salvar no Histórico
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- ABA DE EQUIPE E MODAL DE EQUIPE ---
+function TeamTab({ team, clients, onSave, onDelete }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+
+  const openModal = (member = null) => {
+    if (member) {
+      setEditingMember(member);
+    } else {
+      setEditingMember({ name: '', role: '', cost: 0 });
+    }
+    setIsModalOpen(true);
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-xl font-bold text-white">Gestão da Equipe</h2>
+        <button onClick={() => openModal()} className="bg-white text-black px-4 py-2 rounded-lg font-medium flex items-center gap-2 hover:bg-gray-200 transition-colors">
+          <Plus size={18} /> Novo Integrante
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {team.map(member => {
+          // Filtra projetos ativos atribuídos a este membro
+          const memberClients = clients.filter(c => c.assignedMemberId === member.id && c.status !== 'Churn');
+          
+          // Calcula quanto de MRR Margem (MC) ele está gerando com base na % atribuída a ele
+          const mrrMcGerado = memberClients.reduce((acc, c) => {
+            const margin = calculateMargin(Number(c.recurringValue) || 0);
+            const percentage = Number(c.memberPercentage) || 100;
+            return acc + (margin * (percentage / 100));
+          }, 0);
+
+          const memberCost = Number(member.cost) || 0;
+          const lucroGerado = mrrMcGerado - memberCost;
+
+          return (
+            <div key={member.id} className="bg-[#141414] border border-[#2a2a2a] rounded-xl p-6 relative group hover:border-[#444] transition-colors">
+              <div className="absolute top-4 right-4 flex gap-2">
+                <button onClick={() => openModal(member)} className="p-1.5 bg-[#2a2a2a] rounded text-gray-400 hover:text-white hover:bg-gray-700 transition-colors"><Pencil size={14}/></button>
+                <button onClick={() => onDelete(member.id)} className="p-1.5 bg-[#2a2a2a] rounded text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><Trash2 size={14}/></button>
+              </div>
+              
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-red-900/30 border border-red-500/50 rounded-full flex items-center justify-center text-xl font-bold text-red-400">
+                  {member.name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg text-white">{member.name}</h3>
+                  <p className="text-sm text-gray-400">{member.role || 'Membro da Equipe'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500">Custo Mensal:</span>
+                  <span className="text-red-400 font-medium">{formatCurrency(memberCost)}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500">MRR MC Gerado:</span>
+                  <span className="text-emerald-400 font-medium">{formatCurrency(mrrMcGerado)}</span>
+                </div>
+                <div className="pt-3 border-t border-[#2a2a2a] flex justify-between items-center">
+                  <span className="text-sm font-bold text-white">Lucro do Integrante:</span>
+                  <span className={`font-bold text-lg ${lucroGerado >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
+                    {formatCurrency(lucroGerado)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-[#2a2a2a]">
+                <p className="text-xs text-gray-500 mb-2 uppercase tracking-wider">Projetos Atribuídos ({memberClients.length})</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {memberClients.map(c => (
+                    <span key={c.id} className="text-xs bg-[#0a0a0a] border border-[#333] text-gray-300 px-2 py-1 rounded">
+                      {c.name} ({c.memberPercentage || 100}%)
+                    </span>
+                  ))}
+                  {memberClients.length === 0 && <span className="text-xs text-gray-600">Nenhum projeto</span>}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {team.length === 0 && (
+          <div className="col-span-full py-12 text-center border border-dashed border-[#333] rounded-xl bg-[#0a0a0a]">
+            <Briefcase size={32} className="mx-auto text-gray-600 mb-3" />
+            <p className="text-gray-400">Nenhum integrante cadastrado.</p>
+          </div>
+        )}
+      </div>
+
+      {isModalOpen && <TeamModal member={editingMember} onClose={() => setIsModalOpen(false)} onSave={(data) => { onSave(data); setIsModalOpen(false); }} />}
+    </div>
+  );
+}
+
+function TeamModal({ member, onClose, onSave }) {
+  const [formData, setFormData] = useState(member);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="p-6 border-b border-[#2a2a2a] flex justify-between items-center">
+          <h2 className="text-xl font-bold text-white">{formData.id ? 'Editar Integrante' : 'Novo Integrante'}</h2>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-white bg-[#2a2a2a] rounded-full"><X size={20}/></button>
+        </div>
+        
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Nome Completo</label>
+            <input name="name" value={formData.name} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Cargo / Função</label>
+            <input name="role" value={formData.role} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" placeholder="Ex: Desenvolvedor, Gestor de Tráfego..." />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1 uppercase tracking-wider">Custo Fixo Mensal (R$)</label>
+            <CurrencyInput name="cost" value={formData.cost} onChange={handleChange} className="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" />
+          </div>
+        </div>
+        
+        <div className="p-6 border-t border-[#2a2a2a] bg-[#1a1a1a] flex justify-end gap-3">
+          <button onClick={onClose} className="px-5 py-2 rounded-lg font-medium text-gray-400 hover:text-white hover:bg-[#2a2a2a] transition-colors">Cancelar</button>
+          <button onClick={() => onSave(formData)} className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 rounded-lg font-bold transition-colors shadow-lg shadow-red-900/30">
+            Salvar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- TELA DE LOGIN ---
+function LoginScreen() {
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md bg-[#141414] border border-[#2a2a2a] rounded-2xl p-8 shadow-2xl">
+        <div className="flex justify-center mb-8">
+           <div className="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center font-bold text-white text-3xl shadow-lg shadow-red-600/20">S</div>
+        </div>
+        <h1 className="text-3xl font-bold text-center text-white mb-2">SQUAD<span className="text-red-500">DFC</span></h1>
+        <p className="text-gray-400 text-center mb-8">Gestão Financeira e de Projetos</p>
+        
+        <button 
+          onClick={() => window.location.reload()} 
+          className="w-full bg-white text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-colors"
+        >
+          <svg className="w-5 h-5" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+          </svg>
+          Entrar com Google
+        </button>
+      </div>
+    </div>
+  );
+}
