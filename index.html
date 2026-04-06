@@ -47,15 +47,15 @@
                     <input type="password" id="login-password" class="w-full bg-[#0a0a0a] border border-[#333] rounded p-2.5 text-white focus:border-red-500 focus:outline-none" placeholder="••••••••" />
                 </div>
                 
-                <div id="login-error" class="text-red-500 text-xs font-medium text-center hidden bg-red-500/10 border border-red-500/20 rounded p-2"></div>
+                <div id="login-error" class="text-red-500 text-xs font-medium text-center hidden bg-red-500/10 border border-red-500/20 rounded p-3"></div>
                 
-                <button id="btn-action" onclick="window.appActions.handleEmailAuth()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-red-900/30">
+                <button id="btn-action" type="button" onclick="window.appActions.handleEmailAuth()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-lg shadow-red-900/30 flex justify-center items-center h-12">
                     Entrar
                 </button>
                 
                 <div class="text-center text-sm text-gray-400 mt-2">
                     <span id="toggle-auth-text">Não tem uma conta?</span>
-                    <button onclick="window.appActions.toggleAuthMode()" class="text-red-500 hover:text-red-400 font-medium ml-1">Criar conta</button>
+                    <button type="button" onclick="window.appActions.toggleAuthMode()" class="text-red-500 hover:text-red-400 font-medium ml-1">Criar conta</button>
                 </div>
 
                 <div class="relative flex items-center py-2">
@@ -64,14 +64,14 @@
                     <div class="flex-grow border-t border-[#333]"></div>
                 </div>
 
-                <button onclick="window.appActions.loginWithGoogle()" class="w-full bg-white text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-colors">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                <button id="btn-google" type="button" onclick="window.appActions.loginWithGoogle()" class="w-full bg-white text-black font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-gray-200 transition-colors h-12">
+                    <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
                         <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                     </svg>
-                    Entrar com Google
+                    <span>Entrar com Google</span>
                 </button>
             </div>
         </div>
@@ -308,12 +308,28 @@
         import { getAuth, signInWithCustomToken, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, getDocs, onSnapshot, query, addDoc, updateDoc, deleteDoc, where } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // Inicialização do Firebase
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        // Inicialização do Firebase com Fallback para garantir a conexão ao seu banco
+        const fallbackConfig = {
+            apiKey: "AIzaSyDML8GP1iSR92I-07L3cUhe9B3AwIuuQnM",
+            authDomain: "squaddfc-a7f0e.firebaseapp.com",
+            projectId: "squaddfc-a7f0e",
+            storageBucket: "squaddfc-a7f0e.firebasestorage.app",
+            messagingSenderId: "952471267384",
+            appId: "1:952471267384:web:f253bc3a4e141a80b61ecd"
+        };
+        
+        let firebaseConfig = fallbackConfig;
+        if (typeof __firebase_config !== 'undefined') {
+            try {
+                const parsed = JSON.parse(__firebase_config);
+                if (parsed.apiKey) firebaseConfig = parsed;
+            } catch(e) { console.warn("Usando configuração fallback"); }
+        }
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'squad-dfc-app';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e';
 
         // Estado Global
         const state = {
@@ -636,6 +652,20 @@
             changeTab: (tab) => { state.activeTab = tab; updateApp(); },
             setClientFilter: (filter) => { state.clientFilter = filter; updateApp(); },
             
+            // Controle de Botões de Loading
+            setLoading: (isLoading, btnId) => {
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                if (isLoading) {
+                    btn.disabled = true;
+                    btn.dataset.originalHtml = btn.innerHTML;
+                    btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-current mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>`;
+                } else {
+                    btn.disabled = false;
+                    if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
+                }
+            },
+
             // Controle de Autenticação na UI
             toggleAuthMode: () => {
                 state.isSignUpMode = !state.isSignUpMode;
@@ -655,6 +685,7 @@
                 try {
                     errorEl.classList.add('hidden');
                     if (!email || !password) throw new Error("Preencha e-mail e senha.");
+                    window.appActions.setLoading(true, 'btn-action');
                     
                     if (state.isSignUpMode) {
                         if (!name) throw new Error("Por favor, preencha seu nome.");
@@ -671,17 +702,36 @@
                     if(e.code === 'auth/weak-password') msg = "A senha deve ter pelo menos 6 caracteres.";
                     errorEl.innerText = e.message || msg;
                     errorEl.classList.remove('hidden');
+                } finally {
+                    window.appActions.setLoading(false, 'btn-action');
                 }
             },
 
             loginWithGoogle: async () => {
+                const errorEl = document.getElementById('login-error');
+                errorEl.classList.add('hidden');
+                window.appActions.setLoading(true, 'btn-google');
                 try {
                     const provider = new GoogleAuthProvider();
+                    provider.setCustomParameters({ prompt: 'select_account' });
                     await signInWithPopup(auth, provider);
                 } catch(e) {
-                    const errorEl = document.getElementById('login-error');
-                    errorEl.innerText = "Erro ao entrar com Google.";
+                    console.error("Google Login Erro:", e);
+                    let msg = "Erro ao entrar com Google.";
+                    // Tratamento caprichado do erro mais comum em iframes/previews:
+                    if (e.code === 'auth/unauthorized-domain') {
+                        msg = "Domínio não autorizado pelo Firebase. Vá no Console do Firebase > Authentication > Settings > Authorized domains e adicione a URL que está na barra de pesquisa.";
+                    } else if (e.code === 'auth/popup-closed-by-user') {
+                        msg = "O login foi cancelado.";
+                    } else if (e.code === 'auth/popup-blocked') {
+                        msg = "O pop-up do Google foi bloqueado pelo seu navegador.";
+                    } else if (e.message) {
+                        msg += " " + e.message;
+                    }
+                    errorEl.innerText = msg;
                     errorEl.classList.remove('hidden');
+                } finally {
+                    window.appActions.setLoading(false, 'btn-google');
                 }
             },
 
@@ -894,15 +944,6 @@
         });
         document.getElementById('selected-month').value = state.selectedMonth;
 
-        // Listener de Autenticação
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                // Modo Canvas: loga automaticamente se o preview injetar o token
-                await signInWithCustomToken(auth, __initial_auth_token);
-            }
-            // Se não houver token, permanecemos deslogados exibindo o formulário.
-        };
-
         let unsubListeners = [];
         onAuthStateChanged(auth, (user) => {
             state.user = user;
@@ -929,8 +970,6 @@
                 document.getElementById('app-screen').classList.add('hidden');
             }
         });
-
-        initAuth();
     </script>
 </body>
 </html>
