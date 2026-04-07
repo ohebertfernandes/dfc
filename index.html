@@ -28,13 +28,13 @@
             from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         
         @keyframes scaleIn {
             from { opacity: 0; transform: scale(0.97); }
             to { opacity: 1; transform: scale(1); }
         }
-        .animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-scale-in { animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -383,7 +383,7 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-red-500 mb-1.5 uppercase">Custos (Equipe + Fornec.)</label>
+                    <label class="block text-[10px] font-bold text-red-500 mb-1.5 uppercase">Custos Totais</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
                         <input type="text" id="history-cost" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-2.5 pl-9 text-white focus:border-red-500 outline-none" />
@@ -399,7 +399,7 @@
             </div>
             <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3">
                 <button onclick="window.appActions.closeModal()" class="px-5 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white transition-colors hover:bg-[#222]">Cancelar</button>
-                <button id="btn-save-history" onclick="window.appActions.saveHistory()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-emerald-900/30 transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">Sobrescrever Histórico</button>
+                <button id="btn-save-history" onclick="window.appActions.saveHistory()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-emerald-900/30 transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">Salvar Histórico</button>
             </div>
         </div>
 
@@ -460,18 +460,15 @@
             selectedMemberId: null
         };
 
-        // Regras de Negócio e Fórmulas
         const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         const formatNumberToBR = (val) => (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const calcMargin = (val) => val ? (val * 0.7075) * 0.35 : 0;
         
-        // Proteção XSS e Sintaxe
         const escapeHTML = (str) => {
             if (!str) return '';
-            return str.toString().replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag] || tag));
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
         };
 
-        // Sistema de Notificações Premium (Toasts)
         window.showToast = (msg, type = 'success') => {
             const toast = document.createElement('div');
             toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-xl font-bold text-white shadow-2xl z-[100] animate-fade-in flex items-center gap-3 ${type === 'success' ? 'bg-emerald-600 border border-emerald-500/50' : 'bg-red-600 border border-red-500/50'}`;
@@ -503,8 +500,14 @@
                     if (val === '') { e.target.dataset.value = 0; e.target.value = ''; }
                     else { let num = Number(val) / 100; e.target.dataset.value = num; e.target.value = formatNumberToBR(num); }
                     
-                    if(newInp.id === 'client-recurringValue') document.getElementById('client-recurringMargin').innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
-                    if(newInp.id === 'client-oneTimeValue') document.getElementById('client-oneTimeMargin').innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                    if(newInp.id === 'client-recurringValue') {
+                        const target = document.getElementById('client-recurringMargin');
+                        if(target) target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                    }
+                    if(newInp.id === 'client-oneTimeValue') {
+                        const target = document.getElementById('client-oneTimeMargin');
+                        if(target) target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                    }
                 });
             });
         }
@@ -525,12 +528,18 @@
                 { id: 'closure', icon: 'calculator', label: 'Fechamento do Mês' },
                 { id: 'history', icon: 'history', label: 'Histórico de Faturamento' }
             ];
-            document.getElementById('nav-menu').innerHTML = tabs.map(t => `
-                <button onclick="window.appActions.changeTab('${t.id}')" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${state.activeTab === t.id ? 'bg-red-600 text-white font-bold shadow-lg shadow-red-900/40 translate-x-1' : 'text-gray-400 hover:bg-[#222] hover:text-white font-medium hover:translate-x-1'}">
-                    <i data-lucide="${t.icon}" class="w-5 h-5"></i><span>${t.label}</span>
-                </button>
-            `).join('');
-            document.getElementById('header-title').innerText = tabs.find(t => t.id === state.activeTab)?.label || 'Meu Perfil';
+            const navMenu = document.getElementById('nav-menu');
+            if (navMenu) {
+                navMenu.innerHTML = tabs.map(t => {
+                    const activeClass = state.activeTab === t.id ? 'bg-red-600 text-white font-bold shadow-lg shadow-red-900/40 translate-x-1' : 'text-gray-400 hover:bg-[#222] hover:text-white font-medium hover:translate-x-1';
+                    return `
+                    <button onclick="window.appActions.changeTab('${t.id}')" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${activeClass}">
+                        <i data-lucide="${t.icon}" class="w-5 h-5"></i><span>${t.label}</span>
+                    </button>`;
+                }).join('');
+            }
+            const headerTitle = document.getElementById('header-title');
+            if (headerTitle) headerTitle.innerText = tabs.find(t => t.id === state.activeTab)?.label || 'Meu Perfil';
         }
 
         function updateYearOptions() {
@@ -583,7 +592,7 @@
                 
                 if(mainLabels.length === 0) {
                     state.chartInstance = new Chart(ctx, {
-                        type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: `Nenhum dado encontrado`, data: [0], backgroundColor: '#333', borderRadius: 4 }] },
+                        type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: `Nenhum dado`, data: [0], backgroundColor: '#333', borderRadius: 4 }] },
                         options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
                     });
                 } else {
@@ -654,6 +663,8 @@
 
         function renderContent() {
             const content = document.getElementById('tab-content');
+            if(!content) return;
+            
             content.classList.remove('animate-fade-in');
             void content.offsetWidth; 
             content.classList.add('animate-fade-in');
@@ -664,12 +675,12 @@
             else if (state.activeTab === 'closure') content.innerHTML = getClosureHTML();
             else if (state.activeTab === 'history') content.innerHTML = getHistoryHTML();
             else if (state.activeTab === 'profile') content.innerHTML = getProfileHTML();
+            
             lucide.createIcons();
             setupCurrencyMasks();
             updateYearOptions();
         }
 
-        // --- CONSTRUTORES HTML COMPLETOS DAS ABAS ---
         function getDashboardHTML() {
             const mode = state.filterMode;
 
@@ -728,7 +739,6 @@
                             </div>
                         </div>
 
-                        <!-- Gráficos Integrados -->
                         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex items-center justify-between mb-6">
@@ -828,7 +838,7 @@
                         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Crescimento em ${contextYear}</h3>
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Faturamento vs Custo</h3>
                                     <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Apenas Meses Fechados</span>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1027,6 +1037,8 @@
                 const recTrans = cTrans.find(t => t.type === 'recorrente');
                 const otTrans = cTrans.find(t => t.type === 'onetime');
                 const isChurn = client.status === 'Churn';
+                const recValueToSave = Number(client.recurringValue) || 0;
+                const otValueToSave = Number(client.oneTimeValue) || 0;
                 
                 let teamBadges = '';
                 if (client.teamAllocations && client.teamAllocations.length > 0) {
@@ -1043,12 +1055,12 @@
                     <div class="bg-[#111] border ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#222] hover:border-[#444] shadow-lg hover:shadow-xl'} rounded-2xl p-6 relative transition-all duration-300 group flex flex-col h-full">
                         ${isChurn ? `<div class="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] uppercase font-black px-3 py-1.5 rounded-lg shadow-lg rotate-12">CHURN</div>` : ''}
                         
-                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal('${client.id}')">
+                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal('${escapeHTML(client.id)}')">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="pr-6">
                                     <h3 class="font-black text-xl text-white group-hover:text-red-400 transition-colors tracking-tight leading-tight">${escapeHTML(client.name)}</h3>
                                     <div class="flex flex-wrap gap-2 mt-2">
-                                        <span class="text-[10px] uppercase font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-0.5 rounded">${client.phase}</span>
+                                        <span class="text-[10px] uppercase font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-0.5 rounded">${escapeHTML(client.phase)}</span>
                                         ${teamBadges}
                                     </div>
                                 </div>
@@ -1069,16 +1081,16 @@
                                 <div class="flex items-center justify-between bg-[#0a0a0a] p-2 rounded-lg border border-[#1a1a1a]">
                                     <div class="flex flex-col"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">MRR</span><span class="font-bold text-gray-200 text-sm">${formatCurrency(client.recurringValue)}</span></div>
                                     ${recTrans 
-                                        ? `<button onclick="window.appActions.removeBaixa('${recTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
-                                        : `<button onclick="window.appActions.darBaixa('${client.id}', ${client.recurringValue || 0}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`
+                                        ? `<button onclick="window.appActions.removeBaixa('${escapeHTML(recTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
+                                        : `<button onclick="window.appActions.darBaixa('${escapeHTML(client.id)}', ${recValueToSave}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`
                                     }
                                 </div>` : ''}
                             ${Number(client.oneTimeValue)>0 ? `
                                 <div class="flex items-center justify-between bg-[#0a0a0a] p-2 rounded-lg border border-[#1a1a1a]">
                                     <div class="flex flex-col"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">One Time</span><span class="font-bold text-gray-200 text-sm">${formatCurrency(client.oneTimeValue)}</span></div>
                                     ${otTrans 
-                                        ? `<button onclick="window.appActions.removeBaixa('${otTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
-                                        : `<button onclick="window.appActions.darBaixa('${client.id}', ${client.oneTimeValue || 0}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`
+                                        ? `<button onclick="window.appActions.removeBaixa('${escapeHTML(otTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
+                                        : `<button onclick="window.appActions.darBaixa('${escapeHTML(client.id)}', ${otValueToSave}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`
                                     }
                                 </div>` : ''}
                         </div>` : ''}
@@ -1118,10 +1130,10 @@
                     const lucro = mrrMcGerado - mCost;
                     
                     return `
-                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard('${member.id}')">
+                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard('${escapeHTML(member.id)}')">
                         <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal('${member.id}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${member.id}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal('${escapeHTML(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${escapeHTML(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${escapeHTML(member.name).charAt(0).toUpperCase()}</div>
@@ -1258,12 +1270,12 @@
             } else {
                 html += state.closures.map(c => `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/10 flex flex-col">
-                        <button onclick="window.appActions.openHistoryModal('${c.month}')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="window.appActions.openHistoryModal('${escapeHTML(c.month)}')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                         
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-gray-400 shadow-inner border border-[#333] group-hover:bg-red-900/20 group-hover:border-red-500/30 group-hover:text-red-400 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></div>
                             <div>
-                                <h3 class="font-black text-2xl text-white tracking-tighter">${c.month}</h3>
+                                <h3 class="font-black text-2xl text-white tracking-tighter">${escapeHTML(c.month)}</h3>
                                 <span class="text-[9px] uppercase tracking-widest font-bold text-emerald-500 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1 w-max mt-1"><i data-lucide="lock" class="w-3 h-3"></i> Validado</span>
                             </div>
                         </div>
@@ -1348,17 +1360,20 @@
             changeTab: (tab) => { 
                 state.activeTab = tab; 
                 if(window.innerWidth < 768) {
-                    document.getElementById('sidebar').classList.add('-translate-x-full');
-                    document.getElementById('sidebar-overlay').classList.add('hidden');
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebar-overlay');
+                    if (sidebar) sidebar.classList.add('-translate-x-full');
+                    if (overlay) overlay.classList.add('hidden');
                 }
                 renderNav();
                 renderContent();
             },
             toggleMobileMenu: () => { 
-                document.getElementById('sidebar').classList.toggle('-translate-x-full'); 
-                document.getElementById('sidebar-overlay').classList.toggle('hidden'); 
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (sidebar) sidebar.classList.toggle('-translate-x-full'); 
+                if (overlay) overlay.classList.toggle('hidden'); 
             },
-            
             setFilterMode: (mode) => {
                 state.filterMode = mode;
                 const btnM = document.getElementById('filter-btn-month');
@@ -1389,21 +1404,24 @@
                 }
                 renderContent();
             },
-
             setMemberChart: (id) => {
                 state.selectedMemberId = id;
                 renderChart();
             },
-
             toggleAuthMode: () => { 
                 state.isSignUpMode = !state.isSignUpMode; 
-                document.getElementById('name-field').classList.toggle('hidden', !state.isSignUpMode); 
-                document.getElementById('btn-action').innerText = state.isSignUpMode ? 'Criar Conta e Entrar' : 'Entrar no Sistema'; 
-                document.getElementById('toggle-auth-text').innerText = state.isSignUpMode ? 'Já tem uma conta?' : 'Não tem uma conta?'; 
-                document.querySelector('#toggle-auth-text + button').innerText = state.isSignUpMode ? 'Fazer login' : 'Criar conta grátis'; 
-                document.getElementById('login-error').classList.add('hidden'); 
+                const nameField = document.getElementById('name-field');
+                const btnAction = document.getElementById('btn-action');
+                const toggleAuthText = document.getElementById('toggle-auth-text');
+                const toggleBtn = document.querySelector('#toggle-auth-text + button');
+                const errorEl = document.getElementById('login-error');
+                
+                if(nameField) nameField.classList.toggle('hidden', !state.isSignUpMode); 
+                if(btnAction) btnAction.innerText = state.isSignUpMode ? 'Criar Conta e Entrar' : 'Entrar no Sistema'; 
+                if(toggleAuthText) toggleAuthText.innerText = state.isSignUpMode ? 'Já tem uma conta?' : 'Não tem uma conta?'; 
+                if(toggleBtn) toggleBtn.innerText = state.isSignUpMode ? 'Fazer login' : 'Criar conta grátis'; 
+                if(errorEl) errorEl.classList.add('hidden'); 
             },
-
             setLoading: (isLoading, btnId, originalHtml) => {
                 const btn = document.getElementById(btnId);
                 if (!btn) return;
@@ -1416,7 +1434,6 @@
                     if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
                 }
             },
-
             handleEmailAuth: async () => {
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
@@ -1424,56 +1441,83 @@
                 const errorEl = document.getElementById('login-error');
                 
                 try {
-                    errorEl.classList.add('hidden');
+                    if (errorEl) errorEl.classList.add('hidden');
                     if (!email || !password) throw new Error("Preencha e-mail e senha.");
                     window.appActions.setLoading(true, 'btn-action');
                     if (state.isSignUpMode) {
                         if (!name) throw new Error("Por favor, preencha seu nome para criar a conta.");
                         const cred = await createUserWithEmailAndPassword(auth, email, password);
                         await updateProfile(cred.user, { displayName: name });
-                    } else { await signInWithEmailAndPassword(auth, email, password); }
+                    } else { 
+                        await signInWithEmailAndPassword(auth, email, password); 
+                    }
                 } catch(e) { 
                     let msg = "Erro: " + e.message;
                     if(e.code === 'auth/invalid-email') msg = "E-mail inválido.";
                     if(e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') msg = "E-mail ou senha incorretos.";
                     if(e.code === 'auth/email-already-in-use') msg = "Este e-mail já possui conta.";
                     if(e.code === 'auth/weak-password') msg = "Senha deve ter no mínimo 6 caracteres.";
-                    errorEl.innerText = msg; errorEl.classList.remove('hidden'); 
-                } finally { window.appActions.setLoading(false, 'btn-action'); }
+                    if(errorEl) { errorEl.innerText = msg; errorEl.classList.remove('hidden'); }
+                } finally { 
+                    window.appActions.setLoading(false, 'btn-action'); 
+                }
             },
             loginWithGoogle: async () => {
                 const errorEl = document.getElementById('login-error');
-                errorEl.classList.add('hidden');
+                if(errorEl) errorEl.classList.add('hidden');
                 window.appActions.setLoading(true, 'btn-google');
                 try { 
-                    const provider = new GoogleAuthProvider(); provider.setCustomParameters({ prompt: 'select_account' });
+                    const provider = new GoogleAuthProvider(); 
+                    provider.setCustomParameters({ prompt: 'select_account' });
                     await signInWithPopup(auth, provider); 
                 } catch(e) { 
                     let msg = "Erro ao conectar com Google.";
                     if (e.code === 'auth/unauthorized-domain') {
                         const domain = window.location.hostname;
                         msg = `<strong>Proteção de Segurança:</strong><br/>Copie o domínio atual e cole no Firebase em <em>Configurações > Domínios Autorizados</em>:<br/><div class="bg-black text-red-400 p-2.5 rounded font-mono text-center select-all border border-red-900/50 mt-3 text-xs shadow-inner cursor-text">${domain}</div><p class="mt-3 text-xs text-gray-400 font-normal">Para testar o App imediatamente, use o botão <strong>Visitante</strong>.</p>`;
-                    } else if (e.code === 'auth/popup-closed-by-user') { msg = "Janela de login fechada."; }
-                    errorEl.innerHTML = msg; errorEl.classList.remove('hidden'); 
-                } finally { window.appActions.setLoading(false, 'btn-google'); }
+                    } else if (e.code === 'auth/popup-closed-by-user') { 
+                        msg = "Janela de login fechada."; 
+                    }
+                    if(errorEl) { errorEl.innerHTML = msg; errorEl.classList.remove('hidden'); }
+                } finally { 
+                    window.appActions.setLoading(false, 'btn-google'); 
+                }
             },
-            loginAnonymously: async () => { window.appActions.setLoading(true, 'btn-guest'); try { await signInAnonymously(auth); } catch(e) { alert(e.message); window.appActions.setLoading(false, 'btn-guest');} },
-            logout: () => signOut(auth),
-
+            loginAnonymously: async () => { 
+                window.appActions.setLoading(true, 'btn-guest'); 
+                try { 
+                    await signInAnonymously(auth); 
+                } catch(e) { 
+                    alert(e.message); 
+                    window.appActions.setLoading(false, 'btn-guest');
+                } 
+            },
+            logout: () => {
+                signOut(auth);
+            },
             saveProfile: async () => {
                 if(!state.user) return;
                 const newName = document.getElementById('profile-name').value;
                 const newPass = document.getElementById('profile-password').value;
+                const msgEl = document.getElementById('profile-msg');
                 window.appActions.setLoading(true, 'btn-save-profile');
                 
                 try {
-                    if (newName && newName !== state.user.displayName) { await updateProfile(auth.currentUser, { displayName: newName }); state.user = auth.currentUser; }
-                    if (newPass) { await updatePassword(auth.currentUser, newPass); document.getElementById('profile-password').value = ''; }
+                    if (newName && newName !== state.user.displayName) { 
+                        await updateProfile(auth.currentUser, { displayName: newName }); 
+                        state.user = auth.currentUser; 
+                    }
+                    if (newPass) { 
+                        await updatePassword(auth.currentUser, newPass); 
+                        document.getElementById('profile-password').value = ''; 
+                    }
                     window.showToast('Perfil atualizado com sucesso!');
                     updateHeaderGreeting();
                 } catch(e) {
                     window.showToast((e.code === 'auth/requires-recent-login' ? 'Para mudar a senha, refaça o login por segurança.' : e.message), 'error');
-                } finally { window.appActions.setLoading(false, 'btn-save-profile'); }
+                } finally { 
+                    window.appActions.setLoading(false, 'btn-save-profile'); 
+                }
             },
             updateProfilePhoto: async (input) => {
                 if(!state.user || !input.files || input.files.length === 0) return;
@@ -1481,13 +1525,21 @@
                 if(file.size > 1024 * 1024) { window.showToast("Use imagens menores que 1MB.", "error"); return; }
                 const reader = new FileReader();
                 reader.onloadend = async () => {
-                    try { await updateProfile(auth.currentUser, { photoURL: reader.result }); state.user = auth.currentUser; renderContent(); updateHeaderGreeting(); window.showToast('Foto atualizada!');} 
-                    catch(e) { window.showToast("Erro ao salvar foto.", "error"); }
-                }; reader.readAsDataURL(file);
+                    try { 
+                        await updateProfile(auth.currentUser, { photoURL: reader.result }); 
+                        state.user = auth.currentUser; 
+                        renderContent(); 
+                        updateHeaderGreeting(); 
+                        window.showToast('Foto atualizada!');
+                    } catch(e) { 
+                        window.showToast("Erro ao salvar foto.", "error"); 
+                    }
+                }; 
+                reader.readAsDataURL(file);
             },
-
             addTeamAllocationRow: (memberId = '', pct = 100) => {
                 const container = document.getElementById('team-allocations-container');
+                if(!container) return;
                 const row = document.createElement('div');
                 row.className = 'flex gap-3 items-end team-allocation-row mb-2';
                 row.innerHTML = `
@@ -1506,15 +1558,18 @@
                 container.appendChild(row);
                 lucide.createIcons({root: row});
             },
-
-            setClientFilter: (filter) => { state.clientFilter = filter; renderContent(); },
+            setClientFilter: (filter) => { 
+                state.clientFilter = filter; 
+                renderContent(); 
+            },
             openClientModal: (id = null) => {
                 const m = document.getElementById('modal-client');
                 const allocContainer = document.getElementById('team-allocations-container');
-                allocContainer.innerHTML = '';
+                if (allocContainer) allocContainer.innerHTML = '';
 
                 if(id) {
                     const c = state.clients.find(x => x.id === id);
+                    if(!c) return;
                     document.getElementById('client-modal-title').innerText = 'Editar Projeto & Cliente';
                     document.getElementById('client-id').value = c.id;
                     document.getElementById('client-name').value = c.name || '';
@@ -1561,16 +1616,18 @@
                     document.getElementById('client-observation').value = '';
                     window.appActions.addTeamAllocationRow('', 100);
                 }
-                document.getElementById('modal-backdrop').classList.remove('hidden'); m.classList.remove('hidden'); m.classList.add('flex');
+                document.getElementById('modal-backdrop').classList.remove('hidden'); 
+                m.classList.remove('hidden'); 
+                m.classList.add('flex');
             },
             closeModal: () => { 
-                document.getElementById('modal-backdrop').classList.add('hidden'); 
+                const backdrop = document.getElementById('modal-backdrop');
+                if (backdrop) backdrop.classList.add('hidden'); 
                 ['modal-client', 'modal-team', 'modal-history', 'modal-member-dashboard'].forEach(id => {
                     const el = document.getElementById(id);
                     if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
                 }); 
             },
-            
             saveClient: async () => {
                 if(!state.user) return;
                 const cid = document.getElementById('client-id').value;
@@ -1584,63 +1641,97 @@
                 }).filter(a => a.memberId !== '');
 
                 const data = {
-                    name: document.getElementById('client-name').value, phase: document.getElementById('client-phase').value, status: document.getElementById('client-status').value,
-                    supplier: document.getElementById('client-supplier').value, system: document.getElementById('client-system').value, serviceType: document.getElementById('client-serviceType').value,
-                    supplierCost: getCurrencyInput('client-supplierCost'), teamAllocations: teamAllocations,
-                    recurringValue: getCurrencyInput('client-recurringValue'), oneTimeValue: getCurrencyInput('client-oneTimeValue'),
-                    deliveryDate: document.getElementById('client-deliveryDate').value, nps: document.getElementById('client-nps').value, observation: document.getElementById('client-observation').value
+                    name: document.getElementById('client-name').value, 
+                    phase: document.getElementById('client-phase').value, 
+                    status: document.getElementById('client-status').value,
+                    supplier: document.getElementById('client-supplier').value, 
+                    system: document.getElementById('client-system').value, 
+                    serviceType: document.getElementById('client-serviceType').value,
+                    supplierCost: getCurrencyInput('client-supplierCost'), 
+                    teamAllocations: teamAllocations,
+                    recurringValue: getCurrencyInput('client-recurringValue'), 
+                    oneTimeValue: getCurrencyInput('client-oneTimeValue'),
+                    deliveryDate: document.getElementById('client-deliveryDate').value, 
+                    nps: document.getElementById('client-nps').value, 
+                    observation: document.getElementById('client-observation').value
                 };
 
-                if(!data.name) return window.showToast('Nome do projeto é obrigatório!', 'error');
-
-                window.appActions.setLoading(true, btn.id || (btn.id = 'btn-save-client'));
                 try {
-                    if (cid) await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'clients', cid), data);
-                    else await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'clients'), { ...data, createdAt: new Date().toISOString() });
+                    if(!data.name) return window.showToast('Nome do projeto é obrigatório!', 'error');
+                    window.appActions.setLoading(true, btn.id || (btn.id = 'btn-save-client'));
+                    
+                    if (cid) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'clients', cid), data);
+                    } else {
+                        await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'clients'), { ...data, createdAt: new Date().toISOString() });
+                    }
                     window.showToast('Projeto salvo com sucesso!');
                     window.appActions.closeModal();
-                } catch(e) { window.showToast('Erro ao salvar projeto.', 'error'); console.error(e); }
-                finally { window.appActions.setLoading(false, 'btn-save-client'); }
+                } catch(e) { 
+                    window.showToast('Erro ao salvar projeto.', 'error'); 
+                    console.error(e); 
+                } finally { 
+                    window.appActions.setLoading(false, 'btn-save-client'); 
+                }
             },
-
             darBaixa: async (clientId, value, type) => {
                 if(!state.user) return;
                 const client = state.clients.find(c => c.id === clientId);
                 if (!client) return;
                 try { 
-                    await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'transactions'), { clientId, clientName: client.name, month: state.selectedMonth, value: Number(value), marginValue: calcMargin(Number(value)), type, createdAt: new Date().toISOString() }); 
-                    window.showToast(`Baixa de ${formatCurrency(value)} realizada!`);
-                } catch(e) { window.showToast('Erro ao dar baixa.', 'error'); console.error(e); }
+                    await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'transactions'), { 
+                        clientId, clientName: client.name, month: state.selectedMonth, value: Number(value), marginValue: calcMargin(Number(value)), type, createdAt: new Date().toISOString() 
+                    });
+                    window.showToast(`Baixa de ${formatCurrency(value)} registrada.`);
+                } catch(e) { window.showToast('Erro ao registrar baixa.', 'error'); console.error(e); }
             },
             removeBaixa: async (tid) => { 
                 if(!state.user) return; 
-                try { await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'transactions', tid)); window.showToast('Baixa removida.'); } catch(e) { window.showToast('Erro.', 'error'); console.error(e); } 
+                try { 
+                    await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'transactions', tid)); 
+                    window.showToast('Baixa desfeita com sucesso.');
+                } catch(e) { window.showToast('Erro ao desfazer.', 'error'); console.error(e); } 
             },
-
             openTeamModal: (id = null) => {
                 const m = document.getElementById('modal-team');
                 if(id) {
                     const member = state.team.find(m => m.id === id);
-                    document.getElementById('team-modal-title').innerText = 'Editar Integrante'; document.getElementById('team-id').value = member.id;
-                    document.getElementById('team-name').value = member.name || ''; document.getElementById('team-role').value = member.role || ''; setCurrencyInput('team-cost', member.cost);
+                    if(!member) return;
+                    document.getElementById('team-modal-title').innerText = 'Editar Integrante'; 
+                    document.getElementById('team-id').value = member.id;
+                    document.getElementById('team-name').value = member.name || ''; 
+                    document.getElementById('team-role').value = member.role || ''; 
+                    setCurrencyInput('team-cost', member.cost);
                 } else {
-                    document.getElementById('team-modal-title').innerText = 'Novo Integrante'; document.getElementById('team-id').value = '';
-                    document.getElementById('team-name').value = ''; document.getElementById('team-role').value = ''; setCurrencyInput('team-cost', 0);
+                    document.getElementById('team-modal-title').innerText = 'Novo Integrante'; 
+                    document.getElementById('team-id').value = '';
+                    document.getElementById('team-name').value = ''; 
+                    document.getElementById('team-role').value = ''; 
+                    setCurrencyInput('team-cost', 0);
                 }
-                document.getElementById('modal-backdrop').classList.remove('hidden'); m.classList.remove('hidden'); m.classList.add('flex');
+                document.getElementById('modal-backdrop').classList.remove('hidden'); 
+                m.classList.remove('hidden'); 
+                m.classList.add('flex');
             },
             saveTeam: async () => {
                 if(!state.user) return;
                 const mid = document.getElementById('team-id').value;
-                const data = { name: document.getElementById('team-name').value, role: document.getElementById('team-role').value, cost: getCurrencyInput('team-cost') };
+                const btn = document.querySelector('#modal-team button:last-child');
+                const data = { 
+                    name: document.getElementById('team-name').value, 
+                    role: document.getElementById('team-role').value, 
+                    cost: getCurrencyInput('team-cost') 
+                };
                 
-                if(!data.name) return window.showToast('O nome é obrigatório!', 'error');
-                
-                window.appActions.setLoading(true, 'btn-save-team');
                 try {
-                    if (mid) await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', mid), data);
-                    else await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'team'), { ...data, createdAt: new Date().toISOString() });
-                    window.showToast('Membro salvo com sucesso!');
+                    if(!data.name) return window.showToast('O nome é obrigatório!', 'error');
+                    window.appActions.setLoading(true, btn.id || (btn.id = 'btn-save-team'));
+                    if (mid) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', mid), data);
+                    } else {
+                        await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'team'), { ...data, createdAt: new Date().toISOString() });
+                    }
+                    window.showToast('Integrante salvo com sucesso!');
                     window.appActions.closeModal();
                 } catch(e) { window.showToast('Erro ao salvar.', 'error'); console.error(e); }
                 finally { window.appActions.setLoading(false, 'btn-save-team'); }
@@ -1648,11 +1739,12 @@
             deleteTeam: async (id) => { 
                 if(!state.user) return; 
                 if(confirm('Excluir este membro e seus custos do DFC?')) { 
-                    try { await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', id)); window.showToast('Membro excluído.'); } 
-                    catch(e) { window.showToast('Erro.', 'error'); console.error(e); } 
+                    try { 
+                        await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', id)); 
+                        window.showToast('Integrante removido.');
+                    } catch(e) { window.showToast('Erro ao remover.', 'error'); console.error(e); } 
                 } 
             },
-
             openMemberDashboard: (id) => {
                 const member = state.team.find(m => m.id === id);
                 if(!member) return;
@@ -1737,7 +1829,7 @@
                             <tbody class="divide-y divide-[#222]">
                                 ${activeProjects.length > 0 ? activeProjects.map(p => `
                                     <tr class="hover:bg-[#1a1a1a] transition-colors">
-                                        <td class="p-4 font-bold text-white text-sm">${escapeHTML(p.name)} <span class="text-[9px] uppercase tracking-wider font-bold bg-[#222] border border-[#333] px-2 py-0.5 rounded ml-2 text-gray-400 align-middle">${p.phase}</span></td>
+                                        <td class="p-4 font-bold text-white text-sm">${escapeHTML(p.name)} <span class="text-[9px] uppercase tracking-wider font-bold bg-[#222] border border-[#333] px-2 py-0.5 rounded ml-2 text-gray-400 align-middle">${escapeHTML(p.phase)}</span></td>
                                         <td class="p-4 text-center font-bold text-red-400">${p.pct}%</td>
                                         <td class="p-4 text-right text-gray-400 font-medium">${formatCurrency(p.totalMargin)}</td>
                                         <td class="p-4 text-right font-black text-emerald-400">${formatCurrency(p.memberCut)}</td>
@@ -1759,10 +1851,12 @@
             lockMonth: async () => {
                 if(!state.user) return;
                 
-                window.appActions.setLoading(true, 'btn-lock-month');
+                const btn = document.querySelector('#tab-content button');
+                if(btn) window.appActions.setLoading(true, btn.id || (btn.id='btn-lock-month'));
 
                 const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                 let tRealRec=0, tMargin=0;
+                
                 const activeClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
                 
                 const memberMargins = {};
@@ -1788,50 +1882,73 @@
                 const cVarFornecedores = activeClients.reduce((a, c) => a + Number(c.supplierCost||0), 0);
                 const cTotal = cFixo + cVarFornecedores;
 
-                const data = { month: state.selectedMonth, mrrBrutoRealizado: tRealRec, margemTotalRealizada: tMargin, custosTotais: cTotal, lucroLiquido: tMargin - cTotal, memberMargins: memberMargins, locked: true };
+                const data = { 
+                    month: state.selectedMonth, 
+                    mrrBrutoRealizado: tRealRec, 
+                    margemTotalRealizada: tMargin, 
+                    custosTotais: cTotal, 
+                    lucroLiquido: tMargin - cTotal, 
+                    memberMargins: memberMargins, 
+                    locked: true 
+                };
 
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
-                    window.showToast('Mês travado e salvo no Histórico!');
-                } catch(e) { window.showToast('Erro ao travar o mês.', 'error'); console.error(e); }
-                finally { window.appActions.setLoading(false, 'btn-lock-month'); }
+                    window.showToast('Mês congelado no histórico com sucesso!');
+                } catch(e) { window.showToast('Erro ao congelar mês.', 'error'); console.error(e); }
+                finally { if(btn) window.appActions.setLoading(false, btn.id); }
             },
             
             openHistoryModal: (month = null) => {
-                const m = document.getElementById('modal-history'); const minp = document.getElementById('history-month');
+                const m = document.getElementById('modal-history'); 
+                const minp = document.getElementById('history-month');
                 let closureData = null;
                 
                 if(month) {
                     closureData = state.closures.find(x => x.month === month);
-                    document.getElementById('history-modal-title').innerText = 'Corrigir DFC Histórico'; minp.value = closureData.month; minp.disabled = true;
-                    setCurrencyInput('history-mrr', closureData.mrrBrutoRealizado); setCurrencyInput('history-margin', closureData.margemTotalRealizada); setCurrencyInput('history-cost', closureData.custosTotais);
+                    if(!closureData) return;
+                    document.getElementById('history-modal-title').innerText = 'Corrigir DFC Histórico'; 
+                    minp.value = closureData.month; 
+                    minp.disabled = true;
+                    setCurrencyInput('history-mrr', closureData.mrrBrutoRealizado); 
+                    setCurrencyInput('history-margin', closureData.margemTotalRealizada); 
+                    setCurrencyInput('history-cost', closureData.custosTotais);
                 } else {
-                    document.getElementById('history-modal-title').innerText = 'Lançar Mês Anterior'; minp.value = ''; minp.disabled = false;
-                    setCurrencyInput('history-mrr', 0); setCurrencyInput('history-margin', 0); setCurrencyInput('history-cost', 0);
+                    document.getElementById('history-modal-title').innerText = 'Lançar Mês Anterior'; 
+                    minp.value = ''; 
+                    minp.disabled = false;
+                    setCurrencyInput('history-mrr', 0); 
+                    setCurrencyInput('history-margin', 0); 
+                    setCurrencyInput('history-cost', 0);
                 }
                 
                 const memContainer = document.getElementById('history-members-container');
-                memContainer.innerHTML = state.team.map(mbr => {
-                    const val = (closureData && closureData.memberMargins && closureData.memberMargins[mbr.id]) ? closureData.memberMargins[mbr.id] : 0;
-                    return `
-                        <div class="flex justify-between items-center bg-[#0a0a0a] p-2.5 rounded-lg border border-[#333]">
-                            <span class="text-xs text-gray-300 font-bold truncate pr-2">${escapeHTML(mbr.name)}</span>
-                            <div class="relative w-28 flex-shrink-0">
-                                <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] font-bold pointer-events-none">R$</span>
-                                <input type="text" data-member-id="${mbr.id}" class="currency-mask hist-mem-val w-full bg-[#111] border border-[#444] rounded p-1.5 pl-6 text-white text-xs font-bold focus:border-emerald-500 outline-none" value="${formatNumberToBR(val)}" data-value="${val}" />
+                if(memContainer) {
+                    memContainer.innerHTML = state.team.map(mbr => {
+                        const val = (closureData && closureData.memberMargins && closureData.memberMargins[mbr.id]) ? closureData.memberMargins[mbr.id] : 0;
+                        return `
+                            <div class="flex justify-between items-center bg-[#0a0a0a] p-2.5 rounded-lg border border-[#333]">
+                                <span class="text-xs text-gray-300 font-bold truncate pr-2">${escapeHTML(mbr.name)}</span>
+                                <div class="relative w-28 flex-shrink-0">
+                                    <span class="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] font-bold pointer-events-none">R$</span>
+                                    <input type="text" data-member-id="${escapeHTML(mbr.id)}" class="currency-mask hist-mem-val w-full bg-[#111] border border-[#444] rounded p-1.5 pl-6 text-white text-xs font-bold focus:border-emerald-500 outline-none" value="${formatNumberToBR(val)}" data-value="${val}" />
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }).join('');
+                        `;
+                    }).join('');
+                }
                 
                 setupCurrencyMasks();
-                document.getElementById('modal-backdrop').classList.remove('hidden'); m.classList.remove('hidden'); m.classList.add('flex');
+
+                document.getElementById('modal-backdrop').classList.remove('hidden'); 
+                m.classList.remove('hidden'); 
+                m.classList.add('flex');
             },
             
             saveHistory: async () => {
                 if(!state.user) return;
-                
-                window.appActions.setLoading(true, 'btn-save-history');
+                const btn = document.querySelector('#modal-history button:last-child');
+                window.appActions.setLoading(true, btn.id || (btn.id='btn-save-history'));
 
                 const memberMargins = {};
                 document.querySelectorAll('.hist-mem-val').forEach(input => {
@@ -1848,41 +1965,58 @@
                     memberMargins: memberMargins
                 };
                 
-                if(!data.month) { window.appActions.setLoading(false, 'btn-save-history'); return window.showToast('Selecione o mês!', 'error'); }
+                if(!data.month) { window.appActions.setLoading(false, btn.id); return window.showToast('Selecione o mês!', 'error'); }
                 
-                data.lucroLiquido = data.margemTotalRealizada - data.custosTotais; data.locked = true;
+                data.lucroLiquido = data.margemTotalRealizada - data.custosTotais; 
+                data.locked = true;
+                
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
-                    window.showToast('Histórico atualizado com sucesso!');
+                    window.showToast('Histórico atualizado e computado!');
                     window.appActions.closeModal();
                 } catch(e) { window.showToast('Erro ao salvar no histórico.', 'error'); console.error(e); }
-                finally { window.appActions.setLoading(false, 'btn-save-history'); }
+                finally { window.appActions.setLoading(false, btn.id); }
             }
         };
 
-        document.getElementById('selected-month').addEventListener('change', (e) => { 
-            state.selectedMonth = e.target.value; updateYearOptions(); renderContent(); 
-        });
-        document.getElementById('selected-year').addEventListener('change', (e) => { 
-            state.selectedYear = e.target.value; renderContent(); 
-        });
-        document.getElementById('selected-month').value = state.selectedMonth;
+        // System Core
+        const mInput = document.getElementById('selected-month');
+        if(mInput) {
+            mInput.addEventListener('change', (e) => { 
+                state.selectedMonth = e.target.value; updateYearOptions(); renderContent(); 
+            });
+            mInput.value = state.selectedMonth;
+        }
+
+        const yInput = document.getElementById('selected-year');
+        if(yInput) {
+            yInput.addEventListener('change', (e) => { 
+                state.selectedYear = e.target.value; renderContent(); 
+            });
+        }
 
         function updateHeaderGreeting() {
             if(!state.user) return;
             const name = state.user.displayName || (state.user.isAnonymous ? 'Visitante' : 'Usuário Financeiro');
             const firstName = name.split(' ')[0];
-            document.getElementById('user-greeting').innerHTML = `Logado como: <span class="font-bold text-white">${escapeHTML(firstName)}</span>`;
-            document.getElementById('user-greeting').classList.remove('hidden');
-            document.getElementById('sidebar-user-name').innerText = name;
+            const greetingEl = document.getElementById('user-greeting');
+            const snEl = document.getElementById('sidebar-user-name');
+            if(greetingEl) {
+                greetingEl.innerHTML = `Logado como: <span class="font-bold text-white">${escapeHTML(firstName)}</span>`;
+                greetingEl.classList.remove('hidden');
+            }
+            if(snEl) snEl.innerText = name;
             
             const avatarInit = name.charAt(0).toUpperCase();
+            const saImg = document.getElementById('sidebar-avatar-img');
+            const saIni = document.getElementById('sidebar-avatar-initial');
+            
             if(state.user.photoURL) {
-                document.getElementById('sidebar-avatar-img').src = state.user.photoURL;
-                document.getElementById('sidebar-avatar-img').classList.remove('hidden'); document.getElementById('sidebar-avatar-initial').classList.add('hidden');
+                if(saImg) { saImg.src = state.user.photoURL; saImg.classList.remove('hidden'); }
+                if(saIni) saIni.classList.add('hidden');
             } else {
-                document.getElementById('sidebar-avatar-initial').innerText = avatarInit;
-                document.getElementById('sidebar-avatar-img').classList.add('hidden'); document.getElementById('sidebar-avatar-initial').classList.remove('hidden');
+                if(saIni) { saIni.innerText = avatarInit; saIni.classList.remove('hidden'); }
+                if(saImg) saImg.classList.add('hidden');
             }
         }
 
