@@ -187,7 +187,7 @@
     <!-- MODAIS -->
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
         
-        <!-- Modal Cliente Atualizado -->
+        <!-- Modal Cliente -->
         <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
                 <h2 id="client-modal-title" class="text-2xl font-bold text-white tracking-tight">Cadastrar Novo Projeto</h2>
@@ -427,7 +427,7 @@
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        const fallbackConfig = {
+        let firebaseConfig = {
             apiKey: "AIzaSyDML8GP1iSR92I-07L3cUhe9B3AwIuuQnM",
             authDomain: "squaddfc-a7f0e.firebaseapp.com",
             projectId: "squaddfc-a7f0e",
@@ -436,9 +436,15 @@
             appId: "1:952471267384:web:f253bc3a4e141a80b61ecd"
         };
         
-        let firebaseConfig = fallbackConfig;
         if (typeof __firebase_config !== 'undefined') {
-            try { const parsed = JSON.parse(__firebase_config); if (parsed.apiKey) firebaseConfig = parsed; } catch(e) {}
+            try { 
+                const parsed = JSON.parse(__firebase_config); 
+                if (parsed.apiKey) {
+                    firebaseConfig = parsed; 
+                }
+            } catch(e) {
+                console.error("Config fallback used");
+            }
         }
 
         const app = initializeApp(firebaseConfig);
@@ -446,12 +452,20 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e';
 
+        const getInitialMonth = () => {
+            const d = new Date(); 
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+        };
+
         const state = {
             user: null, 
             activeTab: 'dashboard',
             filterMode: 'month',
-            clients: [], transactions: [], team: [], closures: [],
-            selectedMonth: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })(),
+            clients: [], 
+            transactions: [], 
+            team: [], 
+            closures: [],
+            selectedMonth: getInitialMonth(),
             selectedYear: new Date().getFullYear().toString(),
             clientFilter: 'Todos', 
             isSignUpMode: false, 
@@ -460,13 +474,32 @@
             selectedMemberId: null
         };
 
-        const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
-        const formatNumberToBR = (val) => (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        const calcMargin = (val) => val ? (val * 0.7075) * 0.35 : 0;
+        const formatCurrency = (val) => {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        };
+        
+        const formatNumberToBR = (val) => {
+            return (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        
+        const calcMargin = (val) => {
+            if (!val) return 0;
+            return (val * 0.7075) * 0.35;
+        };
         
         const escapeHTML = (str) => {
             if (!str) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        const escapeJS = (str) => {
+            if (!str) return '';
+            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
         };
 
         window.showToast = (msg, type = 'success') => {
@@ -477,14 +510,18 @@
             lucide.createIcons({root: toast});
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-500');
-                setTimeout(() => toast.remove(), 500);
+                setTimeout(() => {
+                    toast.remove();
+                }, 500);
             }, 3500);
         };
 
         const getMemberPct = (client, memberId) => {
             if (client.teamAllocations && Array.isArray(client.teamAllocations)) {
                 const alloc = client.teamAllocations.find(a => a.memberId === memberId);
-                if (alloc) return alloc.percentage / 100;
+                if (alloc) {
+                    return alloc.percentage / 100;
+                }
             } else if (client.assignedMemberId === memberId) {
                 return (client.memberPercentage || 100) / 100;
             }
@@ -494,30 +531,50 @@
         function setupCurrencyMasks() {
             document.querySelectorAll('.currency-mask').forEach(input => {
                 const newInp = input.cloneNode(true);
-                input.parentNode.replaceChild(newInp, input);
+                if(input.parentNode) {
+                    input.parentNode.replaceChild(newInp, input);
+                }
                 newInp.addEventListener('input', (e) => {
                     let val = e.target.value.replace(/\D/g, '');
-                    if (val === '') { e.target.dataset.value = 0; e.target.value = ''; }
-                    else { let num = Number(val) / 100; e.target.dataset.value = num; e.target.value = formatNumberToBR(num); }
+                    if (val === '') { 
+                        e.target.dataset.value = 0; 
+                        e.target.value = ''; 
+                    } else { 
+                        let num = Number(val) / 100; 
+                        e.target.dataset.value = num; 
+                        e.target.value = formatNumberToBR(num); 
+                    }
                     
                     if(newInp.id === 'client-recurringValue') {
                         const target = document.getElementById('client-recurringMargin');
-                        if(target) target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                        if (target) {
+                            target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                        }
                     }
                     if(newInp.id === 'client-oneTimeValue') {
                         const target = document.getElementById('client-oneTimeMargin');
-                        if(target) target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                        if (target) {
+                            target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
+                        }
                     }
                 });
             });
         }
+
         function setCurrencyInput(id, value) {
             const el = document.getElementById(id);
-            if(el) { el.dataset.value = value || 0; el.value = formatNumberToBR(value); }
+            if(el) { 
+                el.dataset.value = value || 0; 
+                el.value = formatNumberToBR(value); 
+            }
         }
+
         function getCurrencyInput(id) {
             const el = document.getElementById(id);
-            return el ? Number(el.dataset.value || 0) : 0;
+            if(el) {
+                return Number(el.dataset.value || 0);
+            }
+            return 0;
         }
 
         function renderNav() {
@@ -538,8 +595,12 @@
                     </button>`;
                 }).join('');
             }
+            
             const headerTitle = document.getElementById('header-title');
-            if (headerTitle) headerTitle.innerText = tabs.find(t => t.id === state.activeTab)?.label || 'Meu Perfil';
+            if (headerTitle) {
+                const activeTabObj = tabs.find(t => t.id === state.activeTab);
+                headerTitle.innerText = activeTabObj ? activeTabObj.label : 'Meu Perfil';
+            }
         }
 
         function updateYearOptions() {
@@ -547,7 +608,9 @@
             if(!select) return;
             const currentYear = new Date().getFullYear().toString();
             const years = new Set([currentYear, state.selectedMonth.split('-')[0]]);
-            state.closures.forEach(c => years.add(c.month.split('-')[0]));
+            state.closures.forEach(c => {
+                if(c.month) years.add(c.month.split('-')[0]);
+            });
             
             const sortedYears = Array.from(years).sort((a, b) => b.localeCompare(a));
             select.innerHTML = sortedYears.map(y => `<option value="${y}">Resumo do Ano (${y})</option>`).join('');
@@ -559,7 +622,9 @@
             const mCtx = document.getElementById('memberChart');
             
             if (ctx) {
-                let mainLabels = [], mainFaturamento = [], mainCustos = [];
+                let mainLabels = [];
+                let mainFaturamento = [];
+                let mainCustos = [];
                 
                 if (state.filterMode === 'forecast') {
                     mainLabels = ['Projeção Atual'];
@@ -581,48 +646,91 @@
                 } else {
                     const isAll = state.filterMode === 'all';
                     const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
-                    const yearClosures = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(state.selectedYear));
+                    const yearClosures = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
                     const sorted = yearClosures.sort((a,b) => a.month.localeCompare(b.month));
-                    mainLabels = sorted.map(c => { const p = c.month.split('-'); return p[1]+'/'+p[0].substring(2); });
+                    mainLabels = sorted.map(c => { 
+                        if(c.month) {
+                            const p = c.month.split('-'); 
+                            return p[1] + '/' + p[0].substring(2); 
+                        }
+                        return '';
+                    });
                     mainFaturamento = sorted.map(c => c.margemTotalRealizada);
                     mainCustos = sorted.map(c => c.custosTotais);
                 }
 
-                if(state.chartInstance) state.chartInstance.destroy();
+                if(state.chartInstance) {
+                    state.chartInstance.destroy();
+                }
                 
                 if(mainLabels.length === 0) {
                     state.chartInstance = new Chart(ctx, {
-                        type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: `Nenhum dado`, data: [0], backgroundColor: '#333', borderRadius: 4 }] },
-                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
+                        type: 'bar', 
+                        data: { 
+                            labels: ['Sem Dados'], 
+                            datasets: [{ label: `Nenhum fechamento`, data: [0], backgroundColor: '#333', borderRadius: 4 }] 
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            scales: { y: { display: false }, x: { display: false } }, 
+                            plugins: { legend: { labels: { color: '#666' } } } 
+                        }
                     });
                 } else {
                     const mainColors = mainFaturamento.map((f, i) => f >= mainCustos[i] ? '#10b981' : '#ef4444');
                     state.chartInstance = new Chart(ctx, {
                         type: 'bar',
-                        data: { labels: mainLabels, datasets: [{ label: 'Faturamento (Margem)', data: mainFaturamento, backgroundColor: mainColors, borderRadius: 4 }, { label: 'Custos Totais', data: mainCustos, backgroundColor: '#4b5563', borderRadius: 4 }] },
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } }, plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
+                        data: { 
+                            labels: mainLabels, 
+                            datasets: [
+                                { label: 'Faturamento (Margem)', data: mainFaturamento, backgroundColor: mainColors, borderRadius: 4 }, 
+                                { label: 'Custos Totais', data: mainCustos, backgroundColor: '#4b5563', borderRadius: 4 }
+                            ] 
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            interaction: { mode: 'index', intersect: false }, 
+                            scales: { 
+                                y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, 
+                                x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } 
+                            }, 
+                            plugins: { 
+                                legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, 
+                                tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } 
+                            } 
+                        }
                     });
                 }
             }
 
             if (mCtx) {
-                if (state.memberChartInstance) state.memberChartInstance.destroy();
+                if (state.memberChartInstance) {
+                    state.memberChartInstance.destroy();
+                }
 
                 if (!state.selectedMemberId || state.team.length === 0) {
                     state.memberChartInstance = new Chart(mCtx, {
-                        type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: 'Nenhum membro selecionado', data: [0], backgroundColor: '#333', borderRadius: 4 }] },
+                        type: 'bar', 
+                        data: { labels: ['Sem Dados'], datasets: [{ label: 'Nenhum membro selecionado', data: [0], backgroundColor: '#333', borderRadius: 4 }] },
                         options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
                     });
                 } else {
                     const member = state.team.find(m => m.id === state.selectedMemberId);
-                    const memberCost = Number(member.cost || 0);
+                    const memberCost = member ? Number(member.cost || 0) : 0;
 
-                    let mLabels = [], mMargins = [], mCosts = [];
+                    let mLabels = [];
+                    let mMargins = [];
+                    let mCosts = [];
 
                     if (state.filterMode === 'forecast') {
                         mLabels = ['Projeção'];
-                        const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id), 0);
-                        mMargins = [margin]; mCosts = [memberCost];
+                        const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => {
+                            return sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id);
+                        }, 0);
+                        mMargins = [margin]; 
+                        mCosts = [memberCost];
                     } else if (state.filterMode === 'month') {
                         mLabels = [state.selectedMonth];
                         const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
@@ -630,12 +738,20 @@
                             const c = state.clients.find(x => x.id === t.clientId);
                             return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
                         }, 0);
-                        mMargins = [margin]; mCosts = [memberCost];
+                        mMargins = [margin]; 
+                        mCosts = [memberCost];
                     } else {
                         const isAll = state.filterMode === 'all';
-                        const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(state.selectedYear));
+                        const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
                         const sortedC = [...closuresToUse].sort((a,b) => a.month.localeCompare(b.month));
-                        mLabels = sortedC.map(c => { const p = c.month.split('-'); return p[1]+'/'+p[0].substring(2); });
+                        
+                        mLabels = sortedC.map(c => { 
+                            if(c.month) {
+                                const p = c.month.split('-'); 
+                                return p[1] + '/' + p[0].substring(2);
+                            }
+                            return '';
+                        });
                         
                         mMargins = sortedC.map(closure => {
                             if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) {
@@ -654,8 +770,26 @@
 
                     state.memberChartInstance = new Chart(mCtx, {
                         type: 'bar',
-                        data: { labels: mLabels, datasets: [{ label: 'Faturamento Repassado', data: mMargins, backgroundColor: memberColors, borderRadius: 4 }, { label: 'Custo Fixo (Salário)', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 }] },
-                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } }, plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
+                        data: { 
+                            labels: mLabels, 
+                            datasets: [
+                                { label: 'Faturamento Repassado', data: mMargins, backgroundColor: memberColors, borderRadius: 4 }, 
+                                { label: 'Custo Fixo (Salário)', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 }
+                            ] 
+                        },
+                        options: { 
+                            responsive: true, 
+                            maintainAspectRatio: false, 
+                            interaction: { mode: 'index', intersect: false }, 
+                            scales: { 
+                                y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, 
+                                x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } 
+                            }, 
+                            plugins: { 
+                                legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, 
+                                tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } 
+                            } 
+                        }
                     });
                 }
             }
@@ -669,12 +803,25 @@
             void content.offsetWidth; 
             content.classList.add('animate-fade-in');
 
-            if (state.activeTab === 'dashboard') { content.innerHTML = getDashboardHTML(); setTimeout(renderChart, 50); }
-            else if (state.activeTab === 'clients') content.innerHTML = getClientsHTML();
-            else if (state.activeTab === 'team') content.innerHTML = getTeamHTML();
-            else if (state.activeTab === 'closure') content.innerHTML = getClosureHTML();
-            else if (state.activeTab === 'history') content.innerHTML = getHistoryHTML();
-            else if (state.activeTab === 'profile') content.innerHTML = getProfileHTML();
+            if (state.activeTab === 'dashboard') { 
+                content.innerHTML = getDashboardHTML(); 
+                setTimeout(renderChart, 50); 
+            }
+            else if (state.activeTab === 'clients') {
+                content.innerHTML = getClientsHTML();
+            }
+            else if (state.activeTab === 'team') {
+                content.innerHTML = getTeamHTML();
+            }
+            else if (state.activeTab === 'closure') {
+                content.innerHTML = getClosureHTML();
+            }
+            else if (state.activeTab === 'history') {
+                content.innerHTML = getHistoryHTML();
+            }
+            else if (state.activeTab === 'profile') {
+                content.innerHTML = getProfileHTML();
+            }
             
             lucide.createIcons();
             setupCurrencyMasks();
@@ -688,9 +835,14 @@
                 let bestId = state.team[0].id;
                 let maxProfit = -Infinity;
                 state.team.forEach(m => {
-                    const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, m.id), 0);
+                    const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => {
+                        return sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, m.id);
+                    }, 0);
                     const profit = margin - Number(m.cost || 0);
-                    if (profit > maxProfit) { maxProfit = profit; bestId = m.id; }
+                    if (profit > maxProfit) { 
+                        maxProfit = profit; 
+                        bestId = m.id; 
+                    }
                 });
                 state.selectedMemberId = bestId;
             }
@@ -739,6 +891,7 @@
                             </div>
                         </div>
 
+                        <!-- Gráficos Integrados -->
                         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex items-center justify-between mb-6">
@@ -801,7 +954,7 @@
             } else if (mode === 'year' || mode === 'all') {
                 const isAll = mode === 'all';
                 const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
-                const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(state.selectedYear));
+                const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
                 
                 const realMRR = closuresToUse.reduce((a, c) => a + Number(c.mrrBrutoRealizado||0), 0);
                 const realMargin = closuresToUse.reduce((a, c) => a + Number(c.margemTotalRealizada||0), 0);
@@ -1030,7 +1183,9 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             `;
 
-            if(list.length === 0) html += `<div class="col-span-full py-20 text-center text-gray-500 border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="ghost" class="w-10 h-10 mx-auto mb-4 opacity-50"></i>Nenhum cliente encontrado neste filtro.</div>`;
+            if(list.length === 0) {
+                html += `<div class="col-span-full py-20 text-center text-gray-500 border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="ghost" class="w-10 h-10 mx-auto mb-4 opacity-50"></i>Nenhum cliente encontrado neste filtro.</div>`;
+            }
 
             html += list.map(client => {
                 const cTrans = moTrans.filter(t => t.clientId === client.id);
@@ -1051,11 +1206,29 @@
                     if (m) teamBadges = `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${escapeHTML(m.name.split(' ')[0])} (${client.memberPercentage||100}%)</span>`;
                 }
 
+                let recorrenteActionHTML = '';
+                if(Number(client.recurringValue) > 0) {
+                    if (recTrans) {
+                        recorrenteActionHTML = `<button onclick="window.appActions.removeBaixa('${escapeJS(recTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
+                    } else {
+                        recorrenteActionHTML = `<button onclick="window.appActions.darBaixa('${escapeJS(client.id)}', ${recValueToSave}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`;
+                    }
+                }
+                
+                let onetimeActionHTML = '';
+                if(Number(client.oneTimeValue) > 0) {
+                    if (otTrans) {
+                        onetimeActionHTML = `<button onclick="window.appActions.removeBaixa('${escapeJS(otTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
+                    } else {
+                        onetimeActionHTML = `<button onclick="window.appActions.darBaixa('${escapeJS(client.id)}', ${otValueToSave}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`;
+                    }
+                }
+
                 return `
                     <div class="bg-[#111] border ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#222] hover:border-[#444] shadow-lg hover:shadow-xl'} rounded-2xl p-6 relative transition-all duration-300 group flex flex-col h-full">
                         ${isChurn ? `<div class="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] uppercase font-black px-3 py-1.5 rounded-lg shadow-lg rotate-12">CHURN</div>` : ''}
                         
-                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal('${escapeHTML(client.id)}')">
+                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal('${escapeJS(client.id)}')">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="pr-6">
                                     <h3 class="font-black text-xl text-white group-hover:text-red-400 transition-colors tracking-tight leading-tight">${escapeHTML(client.name)}</h3>
@@ -1080,18 +1253,12 @@
                             ${Number(client.recurringValue)>0 ? `
                                 <div class="flex items-center justify-between bg-[#0a0a0a] p-2 rounded-lg border border-[#1a1a1a]">
                                     <div class="flex flex-col"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">MRR</span><span class="font-bold text-gray-200 text-sm">${formatCurrency(client.recurringValue)}</span></div>
-                                    ${recTrans 
-                                        ? `<button onclick="window.appActions.removeBaixa('${escapeHTML(recTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
-                                        : `<button onclick="window.appActions.darBaixa('${escapeHTML(client.id)}', ${recValueToSave}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`
-                                    }
+                                    ${recorrenteActionHTML}
                                 </div>` : ''}
                             ${Number(client.oneTimeValue)>0 ? `
                                 <div class="flex items-center justify-between bg-[#0a0a0a] p-2 rounded-lg border border-[#1a1a1a]">
                                     <div class="flex flex-col"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">One Time</span><span class="font-bold text-gray-200 text-sm">${formatCurrency(client.oneTimeValue)}</span></div>
-                                    ${otTrans 
-                                        ? `<button onclick="window.appActions.removeBaixa('${escapeHTML(otTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
-                                        : `<button onclick="window.appActions.darBaixa('${escapeHTML(client.id)}', ${otValueToSave}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`
-                                    }
+                                    ${onetimeActionHTML}
                                 </div>` : ''}
                         </div>` : ''}
                     </div>
@@ -1130,10 +1297,10 @@
                     const lucro = mrrMcGerado - mCost;
                     
                     return `
-                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard('${escapeHTML(member.id)}')">
+                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard('${escapeJS(member.id)}')">
                         <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal('${escapeHTML(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${escapeHTML(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal('${escapeJS(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${escapeJS(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${escapeHTML(member.name).charAt(0).toUpperCase()}</div>
@@ -1194,7 +1361,9 @@
             `;
 
             const validClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
-            if(validClients.length === 0) html += `<tr><td colspan="5" class="p-10 text-center text-gray-500 italic">Não há projetos ativos na base para este mês.</td></tr>`;
+            if(validClients.length === 0) {
+                html += `<tr><td colspan="5" class="p-10 text-center text-gray-500 italic">Não há projetos ativos na base para este mês.</td></tr>`;
+            }
 
             let somaPrevRec=0, somaPrevOt=0, somaRealRec=0, somaRealOt=0, somaMargem=0;
 
@@ -1202,13 +1371,22 @@
                 const cTrans = moTrans.filter(t => t.clientId === client.id);
                 const recT = cTrans.find(t => t.type === 'recorrente');
                 const otT = cTrans.find(t => t.type === 'onetime');
-                const pR = Number(client.recurringValue||0), pO = Number(client.oneTimeValue||0);
-                const rR = recT?recT.value:0, rO = otT?otT.value:0;
+                const pR = Number(client.recurringValue||0);
+                const pO = Number(client.oneTimeValue||0);
+                const rR = recT?recT.value:0;
+                const rO = otT?otT.value:0;
                 const mTotal = (recT?recT.marginValue:0) + (otT?otT.marginValue:0);
                 const isPaid = (pR===0 || rR>0) && (pO===0 || rO>0);
                 const isPend = (pR>0 && rR===0) || (pO>0 && rO===0);
                 
                 somaPrevRec+=pR; somaPrevOt+=pO; somaRealRec+=rR; somaRealOt+=rO; somaMargem+=mTotal;
+
+                let statusHTML = '<span class="text-gray-600 text-xs font-bold uppercase">-</span>';
+                if(isPaid && (pR>0||pO>0)) {
+                    statusHTML = '<span class="bg-emerald-900/20 text-emerald-400 border border-emerald-900/50 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-wider inline-flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Tudo Pago</span>';
+                } else if(isPend) {
+                    statusHTML = '<span class="bg-amber-900/20 text-amber-500 border border-amber-900/50 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-wider inline-flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Faltam Baixas</span>';
+                }
 
                 html += `
                     <tr class="hover:bg-[#1a1a1a] transition-colors group">
@@ -1222,9 +1400,7 @@
                             ${pO>0?`<div class="font-bold mt-1 ${rO>0?'text-emerald-400':'text-gray-600'}">${rO>0?'Recebido ':'Pendente '}${formatCurrency(rO)}</div>`:''}
                         </td>
                         <td class="p-5 text-right bg-[#111] group-hover:bg-[#1a1a1a] transition-colors"><span class="text-emerald-500 font-mono font-bold">${formatCurrency(mTotal)}</span></td>
-                        <td class="p-5 text-center">
-                            ${isPaid &&(pR>0||pO>0)?'<span class="bg-emerald-900/20 text-emerald-400 border border-emerald-900/50 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-wider inline-flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Tudo Pago</span>' : isPend ? '<span class="bg-amber-900/20 text-amber-500 border border-amber-900/50 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-wider inline-flex items-center gap-1.5"><i data-lucide="clock" class="w-3.5 h-3.5"></i> Faltam Baixas</span>' : '<span class="text-gray-600 text-xs font-bold uppercase">-</span>'}
-                        </td>
+                        <td class="p-5 text-center">${statusHTML}</td>
                     </tr>
                 `;
             });
@@ -1270,7 +1446,7 @@
             } else {
                 html += state.closures.map(c => `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/10 flex flex-col">
-                        <button onclick="window.appActions.openHistoryModal('${escapeHTML(c.month)}')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="window.appActions.openHistoryModal('${escapeJS(c.month)}')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                         
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-gray-400 shadow-inner border border-[#333] group-hover:bg-red-900/20 group-hover:border-red-500/30 group-hover:text-red-400 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></div>
@@ -1300,6 +1476,7 @@
             const userName = state.user?.displayName || '';
             const userEmail = state.user?.email || 'Acesso Visitante (Anônimo)';
             const photoInitial = userName ? userName.charAt(0).toUpperCase() : (userEmail !== 'Acesso Visitante (Anônimo)' ? userEmail.charAt(0).toUpperCase() : 'V');
+            const hasPhoto = state.user?.photoURL ? true : false;
             
             return `
                 <div class="max-w-2xl mx-auto bg-[#111] border border-[#222] rounded-3xl shadow-2xl overflow-hidden animate-fade-in relative">
@@ -1308,7 +1485,7 @@
                     <div class="px-8 pb-10 relative z-10">
                         <div class="flex flex-col sm:flex-row items-center sm:items-end gap-6 -mt-16 mb-10 text-center sm:text-left">
                             <div class="w-32 h-32 bg-[#0a0a0a] border-4 border-[#111] rounded-full flex items-center justify-center text-5xl font-black text-red-500 shadow-2xl overflow-hidden relative group transition-transform hover:scale-105 cursor-pointer">
-                                ${state.user?.photoURL ? `<img src="${state.user.photoURL}" alt="Profile" class="w-full h-full object-cover"/>` : photoInitial}
+                                ${hasPhoto ? `<img src="${state.user.photoURL}" alt="Profile" class="w-full h-full object-cover"/>` : photoInitial}
                                 <label for="profile-photo-upload" class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center cursor-pointer transition-opacity backdrop-blur-sm">
                                     <i data-lucide="camera" class="text-white w-6 h-6 mb-1"></i>
                                     <span class="text-[10px] font-bold text-white uppercase tracking-wider">Alterar</span>
@@ -1499,7 +1676,6 @@
                 if(!state.user) return;
                 const newName = document.getElementById('profile-name').value;
                 const newPass = document.getElementById('profile-password').value;
-                const msgEl = document.getElementById('profile-msg');
                 window.appActions.setLoading(true, 'btn-save-profile');
                 
                 try {
@@ -1581,9 +1757,15 @@
                     
                     setCurrencyInput('client-supplierCost', c.supplierCost || 0);
                     setCurrencyInput('client-recurringValue', c.recurringValue);
-                    document.getElementById('client-recurringMargin').innerText = formatCurrency(calcMargin(c.recurringValue));
+                    
+                    const recMargTarget = document.getElementById('client-recurringMargin');
+                    if(recMargTarget) recMargTarget.innerText = formatCurrency(calcMargin(c.recurringValue));
+                    
                     setCurrencyInput('client-oneTimeValue', c.oneTimeValue);
-                    document.getElementById('client-oneTimeMargin').innerText = formatCurrency(calcMargin(c.oneTimeValue));
+                    
+                    const otMargTarget = document.getElementById('client-oneTimeMargin');
+                    if(otMargTarget) otMargTarget.innerText = formatCurrency(calcMargin(c.oneTimeValue));
+                    
                     document.getElementById('client-deliveryDate').value = c.deliveryDate || '';
                     document.getElementById('client-nps').value = c.nps || '';
                     document.getElementById('client-observation').value = c.observation || '';
@@ -1608,17 +1790,27 @@
                     
                     setCurrencyInput('client-supplierCost', 0);
                     setCurrencyInput('client-recurringValue', 0);
-                    document.getElementById('client-recurringMargin').innerText = 'R$ 0,00';
+                    
+                    const recMargTarget = document.getElementById('client-recurringMargin');
+                    if(recMargTarget) recMargTarget.innerText = 'R$ 0,00';
+                    
                     setCurrencyInput('client-oneTimeValue', 0);
-                    document.getElementById('client-oneTimeMargin').innerText = 'R$ 0,00';
+                    
+                    const otMargTarget = document.getElementById('client-oneTimeMargin');
+                    if(otMargTarget) otMargTarget.innerText = 'R$ 0,00';
+                    
                     document.getElementById('client-deliveryDate').value = '';
                     document.getElementById('client-nps').value = '';
                     document.getElementById('client-observation').value = '';
                     window.appActions.addTeamAllocationRow('', 100);
                 }
-                document.getElementById('modal-backdrop').classList.remove('hidden'); 
-                m.classList.remove('hidden'); 
-                m.classList.add('flex');
+                
+                const backdrop = document.getElementById('modal-backdrop');
+                if(backdrop) backdrop.classList.remove('hidden'); 
+                if(m) {
+                    m.classList.remove('hidden'); 
+                    m.classList.add('flex');
+                }
             },
             closeModal: () => { 
                 const backdrop = document.getElementById('modal-backdrop');
@@ -1631,7 +1823,7 @@
             saveClient: async () => {
                 if(!state.user) return;
                 const cid = document.getElementById('client-id').value;
-                const btn = document.querySelector('#modal-client button:last-child');
+                const btn = document.getElementById('btn-save-client');
                 
                 const teamAllocations = Array.from(document.querySelectorAll('.team-allocation-row')).map(row => {
                     return {
@@ -1658,7 +1850,7 @@
 
                 try {
                     if(!data.name) return window.showToast('Nome do projeto é obrigatório!', 'error');
-                    window.appActions.setLoading(true, btn.id || (btn.id = 'btn-save-client'));
+                    window.appActions.setLoading(true, 'btn-save-client');
                     
                     if (cid) {
                         await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'clients', cid), data);
@@ -1709,14 +1901,17 @@
                     document.getElementById('team-role').value = ''; 
                     setCurrencyInput('team-cost', 0);
                 }
-                document.getElementById('modal-backdrop').classList.remove('hidden'); 
-                m.classList.remove('hidden'); 
-                m.classList.add('flex');
+                const backdrop = document.getElementById('modal-backdrop');
+                if(backdrop) backdrop.classList.remove('hidden'); 
+                if(m) {
+                    m.classList.remove('hidden'); 
+                    m.classList.add('flex');
+                }
             },
             saveTeam: async () => {
                 if(!state.user) return;
                 const mid = document.getElementById('team-id').value;
-                const btn = document.querySelector('#modal-team button:last-child');
+                const btn = document.getElementById('btn-save-team');
                 const data = { 
                     name: document.getElementById('team-name').value, 
                     role: document.getElementById('team-role').value, 
@@ -1725,7 +1920,7 @@
                 
                 try {
                     if(!data.name) return window.showToast('O nome é obrigatório!', 'error');
-                    window.appActions.setLoading(true, btn.id || (btn.id = 'btn-save-team'));
+                    window.appActions.setLoading(true, 'btn-save-team');
                     if (mid) {
                         await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'team', mid), data);
                     } else {
@@ -1756,7 +1951,9 @@
                 if (state.filterMode === 'forecast') {
                     subtitle = 'Projeção (Run Rate Atual)';
                     mCostTotal = Number(member.cost||0);
-                    mrrMcGerado = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id), 0);
+                    mrrMcGerado = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => {
+                        return sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id);
+                    }, 0);
                 } else if (state.filterMode === 'month') {
                     subtitle = `Realizado em ${state.selectedMonth}`;
                     mCostTotal = Number(member.cost||0);
@@ -1768,12 +1965,17 @@
                 } else {
                     const contextYear = state.filterMode === 'year' ? state.selectedYear : 'Todo o Período Histórico';
                     subtitle = `Acumulado Histórico (${contextYear})`;
-                    const closuresToUse = state.filterMode === 'year' ? state.closures.filter(c => c.month.startsWith(state.selectedYear)) : state.closures;
+                    const closuresToUse = state.filterMode === 'year' ? state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear)) : state.closures;
                     
                     mrrMcGerado = closuresToUse.reduce((sum, closure) => {
-                        if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) return sum + closure.memberMargins[member.id];
+                        if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) {
+                            return sum + closure.memberMargins[member.id];
+                        }
                         const moTrans = state.transactions.filter(t => t.month === closure.month);
-                        return sum + moTrans.reduce((s, t) => { const c = state.clients.find(x => x.id === t.clientId); return s + (c ? t.marginValue * getMemberPct(c, member.id) : 0); }, 0);
+                        return sum + moTrans.reduce((s, t) => { 
+                            const c = state.clients.find(x => x.id === t.clientId); 
+                            return s + (c ? t.marginValue * getMemberPct(c, member.id) : 0); 
+                        }, 0);
                     }, 0);
                     mCostTotal = Number(member.cost||0) * closuresToUse.length;
                 }
@@ -1789,7 +1991,8 @@
                     return null;
                 }).filter(Boolean);
 
-                document.getElementById('member-dash-title').innerText = `Performance: ${escapeHTML(member.name.split(' ')[0])}`;
+                const dashTitle = document.getElementById('member-dash-title');
+                if(dashTitle) dashTitle.innerText = `Performance: ${escapeHTML(member.name.split(' ')[0])}`;
 
                 let html = `
                     <div class="flex items-center gap-4 mb-8">
@@ -1840,19 +2043,24 @@
                     </div>
                 `;
 
-                document.getElementById('member-dash-content').innerHTML = html;
-                document.getElementById('modal-backdrop').classList.remove('hidden');
+                const content = document.getElementById('member-dash-content');
+                if(content) content.innerHTML = html;
+                
+                const backdrop = document.getElementById('modal-backdrop');
+                if(backdrop) backdrop.classList.remove('hidden');
+                
                 const m = document.getElementById('modal-member-dashboard');
-                m.classList.remove('hidden');
-                m.classList.add('flex');
+                if(m) {
+                    m.classList.remove('hidden');
+                    m.classList.add('flex');
+                }
                 lucide.createIcons();
             },
 
             lockMonth: async () => {
                 if(!state.user) return;
                 
-                const btn = document.querySelector('#tab-content button');
-                if(btn) window.appActions.setLoading(true, btn.id || (btn.id='btn-lock-month'));
+                window.appActions.setLoading(true, 'btn-lock-month');
 
                 const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                 let tRealRec=0, tMargin=0;
@@ -1863,7 +2071,8 @@
                 
                 activeClients.forEach(c => {
                     const cTrans = moTrans.filter(t => t.clientId === c.id);
-                    const recT = cTrans.find(t => t.type === 'recorrente'); const otT = cTrans.find(t => t.type === 'onetime');
+                    const recT = cTrans.find(t => t.type === 'recorrente'); 
+                    const otT = cTrans.find(t => t.type === 'onetime');
                     tRealRec += recT?recT.value:0; 
                     
                     const clientMargin = (recT?recT.marginValue:0) + (otT?otT.marginValue:0);
@@ -1896,7 +2105,7 @@
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
                     window.showToast('Mês congelado no histórico com sucesso!');
                 } catch(e) { window.showToast('Erro ao congelar mês.', 'error'); console.error(e); }
-                finally { if(btn) window.appActions.setLoading(false, btn.id); }
+                finally { window.appActions.setLoading(false, 'btn-lock-month'); }
             },
             
             openHistoryModal: (month = null) => {
@@ -1940,15 +2149,18 @@
                 
                 setupCurrencyMasks();
 
-                document.getElementById('modal-backdrop').classList.remove('hidden'); 
-                m.classList.remove('hidden'); 
-                m.classList.add('flex');
+                const backdrop = document.getElementById('modal-backdrop');
+                if(backdrop) backdrop.classList.remove('hidden'); 
+                if(m) {
+                    m.classList.remove('hidden'); 
+                    m.classList.add('flex');
+                }
             },
             
             saveHistory: async () => {
                 if(!state.user) return;
-                const btn = document.querySelector('#modal-history button:last-child');
-                window.appActions.setLoading(true, btn.id || (btn.id='btn-save-history'));
+                
+                window.appActions.setLoading(true, 'btn-save-history');
 
                 const memberMargins = {};
                 document.querySelectorAll('.hist-mem-val').forEach(input => {
@@ -1965,7 +2177,7 @@
                     memberMargins: memberMargins
                 };
                 
-                if(!data.month) { window.appActions.setLoading(false, btn.id); return window.showToast('Selecione o mês!', 'error'); }
+                if(!data.month) { window.appActions.setLoading(false, 'btn-save-history'); return window.showToast('Selecione o mês!', 'error'); }
                 
                 data.lucroLiquido = data.margemTotalRealizada - data.custosTotais; 
                 data.locked = true;
@@ -1975,7 +2187,7 @@
                     window.showToast('Histórico atualizado e computado!');
                     window.appActions.closeModal();
                 } catch(e) { window.showToast('Erro ao salvar no histórico.', 'error'); console.error(e); }
-                finally { window.appActions.setLoading(false, btn.id); }
+                finally { window.appActions.setLoading(false, 'btn-save-history'); }
             }
         };
 
@@ -1983,7 +2195,9 @@
         const mInput = document.getElementById('selected-month');
         if(mInput) {
             mInput.addEventListener('change', (e) => { 
-                state.selectedMonth = e.target.value; updateYearOptions(); renderContent(); 
+                state.selectedMonth = e.target.value; 
+                updateYearOptions(); 
+                renderContent(); 
             });
             mInput.value = state.selectedMonth;
         }
@@ -1991,7 +2205,8 @@
         const yInput = document.getElementById('selected-year');
         if(yInput) {
             yInput.addEventListener('change', (e) => { 
-                state.selectedYear = e.target.value; renderContent(); 
+                state.selectedYear = e.target.value; 
+                renderContent(); 
             });
         }
 
@@ -2005,7 +2220,9 @@
                 greetingEl.innerHTML = `Logado como: <span class="font-bold text-white">${escapeHTML(firstName)}</span>`;
                 greetingEl.classList.remove('hidden');
             }
-            if(snEl) snEl.innerText = name;
+            if(snEl) {
+                snEl.innerText = name;
+            }
             
             const avatarInit = name.charAt(0).toUpperCase();
             const saImg = document.getElementById('sidebar-avatar-img');
@@ -2028,22 +2245,44 @@
             
             if(user) {
                 updateHeaderGreeting();
-                login.classList.add('opacity-0');
+                if(login) login.classList.add('opacity-0');
                 setTimeout(() => {
-                    login.classList.add('hidden'); app.classList.remove('hidden');
-                    setTimeout(() => app.classList.remove('opacity-0'), 50);
+                    if(login) login.classList.add('hidden'); 
+                    if(app) app.classList.remove('hidden');
+                    setTimeout(() => {
+                        if(app) app.classList.remove('opacity-0');
+                    }, 50);
                 }, 500);
                 
-                unsubListeners.forEach(fn => fn()); unsubListeners = [];
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'clients'), s => { state.clients = s.docs.map(d => ({id: d.id, ...d.data()})); updateYearOptions(); renderContent(); }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), s => { state.transactions = s.docs.map(d => ({id: d.id, ...d.data()})); renderContent(); }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'team'), s => { state.team = s.docs.map(d => ({id: d.id, ...d.data()})); renderContent(); }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures'), s => { state.closures = s.docs.map(d => ({id: d.id, ...d.data()})); updateYearOptions(); renderContent(); }));
+                unsubListeners.forEach(fn => fn()); 
+                unsubListeners = [];
+                
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'clients'), s => { 
+                    state.clients = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                    updateYearOptions(); 
+                    renderContent(); 
+                }));
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), s => { 
+                    state.transactions = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                    renderContent(); 
+                }));
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'team'), s => { 
+                    state.team = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                    renderContent(); 
+                }));
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures'), s => { 
+                    state.closures = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                    updateYearOptions(); 
+                    renderContent(); 
+                }));
             } else {
-                app.classList.add('opacity-0');
+                if(app) app.classList.add('opacity-0');
                 setTimeout(() => {
-                    app.classList.add('hidden'); login.classList.remove('hidden');
-                    setTimeout(() => login.classList.remove('opacity-0'), 50);
+                    if(app) app.classList.add('hidden'); 
+                    if(login) login.classList.remove('hidden');
+                    setTimeout(() => {
+                        if(login) login.classList.remove('opacity-0');
+                    }, 50);
                 }, 500);
             }
         });
