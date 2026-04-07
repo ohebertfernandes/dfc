@@ -157,10 +157,11 @@
                         <span id="user-greeting" class="text-sm font-bold text-white hidden"></span>
                     </div>
                     
-                    <!-- Novo Filtro Triplo (Mensal / Anual / Previsto) -->
+                    <!-- Filtro Quádruplo (Mensal / Anual / Geral / Previsto) -->
                     <div class="flex bg-[#1a1a1a] rounded-lg border border-[#333] p-1">
                         <button id="filter-btn-month" onclick="window.appActions.setFilterMode('month')" class="px-4 py-1.5 text-xs font-bold rounded-md bg-[#333] text-white shadow-sm transition-all">Mensal</button>
                         <button id="filter-btn-year" onclick="window.appActions.setFilterMode('year')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Anual</button>
+                        <button id="filter-btn-all" onclick="window.appActions.setFilterMode('all')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Geral</button>
                         <button id="filter-btn-forecast" onclick="window.appActions.setFilterMode('forecast')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Previsto</button>
                     </div>
 
@@ -188,7 +189,7 @@
     <!-- MODAIS -->
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
         
-        <!-- Modal Cliente -->
+        <!-- Modal Cliente Atualizado com Equipe Múltipla e Custo Fornecedor -->
         <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
                 <h2 id="client-modal-title" class="text-2xl font-bold text-white tracking-tight">Cadastrar Novo Projeto</h2>
@@ -230,6 +231,7 @@
                         </div>
                     </div>
                     
+                    <!-- Novo Custo Fornecedor e Fornecedor Lado a Lado -->
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Fornecedor</label>
@@ -440,7 +442,7 @@
         const state = {
             user: null, 
             activeTab: 'dashboard',
-            filterMode: 'month', // 'month', 'year', 'forecast'
+            filterMode: 'month', // 'month', 'year', 'all', 'forecast'
             clients: [], transactions: [], team: [], closures: [],
             selectedMonth: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })(),
             selectedYear: new Date().getFullYear().toString(),
@@ -510,10 +512,11 @@
 
         function renderChart() {
             const ctx = document.getElementById('yearlyChart');
-            if(!ctx) return; // Only render chart if the canvas exists (which is only in 'year' view now)
+            if(!ctx) return; 
             
-            const contextYear = state.selectedYear;
-            const yearClosures = state.closures.filter(c => c.month.startsWith(contextYear));
+            const isAll = state.filterMode === 'all';
+            const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
+            const yearClosures = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(contextYear));
             const sorted = yearClosures.sort((a,b) => a.month.localeCompare(b.month));
             
             if(state.chartInstance) state.chartInstance.destroy();
@@ -552,7 +555,7 @@
 
             if (state.activeTab === 'dashboard') { 
                 content.innerHTML = getDashboardHTML(); 
-                if(state.filterMode === 'year') {
+                if(state.filterMode === 'year' || state.filterMode === 'all') {
                     setTimeout(renderChart, 50); 
                 }
             }
@@ -650,15 +653,16 @@
                     </div>
                 `;
 
-            } else if (mode === 'year') {
-                // --- VISÃO ANUAL (HISTÓRICO FECHADO) ---
-                const contextYear = state.selectedYear;
-                const yearClosures = state.closures.filter(c => c.month.startsWith(contextYear));
-                const realMRR = yearClosures.reduce((a, c) => a + Number(c.mrrBrutoRealizado||0), 0);
-                const realMargin = yearClosures.reduce((a, c) => a + Number(c.margemTotalRealizada||0), 0);
-                const lucro = yearClosures.reduce((a, c) => a + Number(c.lucroLiquido||0), 0);
-                const cFixo = yearClosures.reduce((a, c) => a + Number(c.custosTotais||0), 0); // Custos totais consolidados no Histórico
-                const monthsClosed = yearClosures.length;
+            } else if (mode === 'year' || mode === 'all') {
+                // --- VISÃO ANUAL OU GERAL (HISTÓRICO FECHADO) ---
+                const contextYear = mode === 'year' ? state.selectedYear : 'Todo o Período';
+                const closuresToUse = mode === 'year' ? state.closures.filter(c => c.month.startsWith(state.selectedYear)) : state.closures;
+                
+                const realMRR = closuresToUse.reduce((a, c) => a + Number(c.mrrBrutoRealizado||0), 0);
+                const realMargin = closuresToUse.reduce((a, c) => a + Number(c.margemTotalRealizada||0), 0);
+                const lucro = closuresToUse.reduce((a, c) => a + Number(c.lucroLiquido||0), 0);
+                const cFixo = closuresToUse.reduce((a, c) => a + Number(c.custosTotais||0), 0); // Custos totais consolidados no Histórico
+                const monthsClosed = closuresToUse.length;
                 const avgProfit = monthsClosed > 0 ? lucro / monthsClosed : 0;
 
                 return `
@@ -698,18 +702,18 @@
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-lg">
-                                <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Resumo do Ano (${contextYear})</h3>
+                                <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Resumo (${contextYear})</h3>
                                 <div class="space-y-4">
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
                                         <span class="font-medium text-gray-400">Meses Fechados</span>
-                                        <span class="font-bold text-white">${monthsClosed} de 12</span>
+                                        <span class="font-bold text-white">${monthsClosed} ${mode === 'year' ? 'de 12' : 'meses'}</span>
                                     </div>
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
                                         <span class="font-medium text-gray-400">Média de Lucro Mensal</span>
                                         <span class="font-bold ${avgProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}">${formatCurrency(avgProfit)}</span>
                                     </div>
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
-                                        <span class="font-medium text-gray-400">Total de Custos Anuais</span>
+                                        <span class="font-medium text-gray-400">Total de Custos Consolidados</span>
                                         <span class="font-bold text-red-400">-${formatCurrency(cFixo)}</span>
                                     </div>
                                 </div>
@@ -1196,6 +1200,7 @@
                 state.filterMode = mode;
                 const btnM = document.getElementById('filter-btn-month');
                 const btnY = document.getElementById('filter-btn-year');
+                const btnA = document.getElementById('filter-btn-all');
                 const btnF = document.getElementById('filter-btn-forecast');
                 
                 const activeClass = 'px-4 py-1.5 text-xs font-bold rounded-md bg-[#333] text-white shadow-sm transition-all';
@@ -1203,6 +1208,7 @@
                 
                 btnM.className = mode === 'month' ? activeClass : inactiveClass;
                 btnY.className = mode === 'year' ? activeClass : inactiveClass;
+                btnA.className = mode === 'all' ? activeClass : inactiveClass;
                 btnF.className = mode === 'forecast' ? activeClass : inactiveClass;
 
                 if (mode === 'month') {
