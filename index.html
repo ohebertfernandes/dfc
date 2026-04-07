@@ -368,20 +368,6 @@
             </div>
         </div>
 
-        <!-- NOVO: Modal Member Dashboard -->
-        <div id="modal-member-dashboard" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
-            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-red-900/30 border border-red-500/50 rounded-full flex items-center justify-center font-black text-red-400 shadow-inner"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></div>
-                    <h2 class="text-2xl font-bold text-white tracking-tight" id="member-dash-title">Dashboard do Integrante</h2>
-                </div>
-                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] hover:bg-[#333] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-            <div class="p-6 md:p-8" id="member-dash-content">
-                <!-- Conteudo Dinamico (JS Inject) -->
-            </div>
-        </div>
-
         <!-- Modal History -->
         <div id="modal-history" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center bg-[#111]">
@@ -461,13 +447,25 @@
             selectedYear: new Date().getFullYear().toString(),
             clientFilter: 'Todos', 
             isSignUpMode: false, 
-            chartInstance: null
+            chartInstance: null,
+            memberChartInstance: null,
+            selectedMemberId: null
         };
 
         // Regras de Negócio e Fórmulas Matemáticas do DFC
         const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         const formatNumberToBR = (val) => (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const calcMargin = (val) => val ? (val * 0.7075) * 0.35 : 0;
+        
+        const getMemberPct = (client, memberId) => {
+            if (client.teamAllocations && Array.isArray(client.teamAllocations)) {
+                const alloc = client.teamAllocations.find(a => a.memberId === memberId);
+                if (alloc) return alloc.percentage / 100;
+            } else if (client.assignedMemberId === memberId) {
+                return (client.memberPercentage || 100) / 100;
+            }
+            return 0;
+        };
 
         // Controle de DOM (Máscaras R$)
         function setupCurrencyMasks() {
@@ -525,52 +523,145 @@
 
         function renderChart() {
             const ctx = document.getElementById('yearlyChart');
-            if(!ctx) return; 
+            const mCtx = document.getElementById('memberChart');
             
-            const isAll = state.filterMode === 'all';
-            const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
-            const yearClosures = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(contextYear));
-            const sorted = yearClosures.sort((a,b) => a.month.localeCompare(b.month));
-            
-            if(state.chartInstance) state.chartInstance.destroy();
-            
-            if(sorted.length === 0) {
-                state.chartInstance = new Chart(ctx, {
-                    type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: `Nenhum fechamento em ${contextYear}`, data: [0], backgroundColor: '#333', borderRadius: 4 }] },
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
-                });
-                return;
+            if (ctx) {
+                let mainLabels = [];
+                let mainFaturamento = [];
+                let mainCustos = [];
+                
+                if (state.filterMode === 'forecast') {
+                    mainLabels = ['Projeção'];
+                    const activeC = state.clients.filter(c => c.status !== 'Churn');
+                    const prevMarginRec = activeC.reduce((a, c) => a + calcMargin(Number(c.recurringValue||0)), 0);
+                    const prevMarginOT = activeC.reduce((a, c) => a + calcMargin(Number(c.oneTimeValue||0)), 0);
+                    mainFaturamento = [prevMarginRec + prevMarginOT];
+                    
+                    const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
+                    const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                    mainCustos = [cFixo + cVarFornecedores];
+                } else if (state.filterMode === 'month') {
+                    mainLabels = [state.selectedMonth];
+                    const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                    mainFaturamento = [moTrans.reduce((a, c) => a + c.marginValue, 0)];
+                    
+                    const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
+                    const activeC = state.clients.filter(c => c.status !== 'Churn');
+                    const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                    mainCustos = [cFixo + cVarFornecedores];
+                } else {
+                    const isAll = state.filterMode === 'all';
+                    const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
+                    const yearClosures = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(state.selectedYear));
+                    const sorted = yearClosures.sort((a,b) => a.month.localeCompare(b.month));
+                    mainLabels = sorted.map(c => { const p = c.month.split('-'); return p[1]+'/'+p[0].substring(2); });
+                    mainFaturamento = sorted.map(c => c.margemTotalRealizada);
+                    mainCustos = sorted.map(c => c.custosTotais);
+                }
+
+                if(state.chartInstance) state.chartInstance.destroy();
+                
+                if(mainLabels.length === 0) {
+                    state.chartInstance = new Chart(ctx, {
+                        type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: `Nenhum fechamento`, data: [0], backgroundColor: '#333', borderRadius: 4 }] },
+                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
+                    });
+                } else {
+                    const mainColors = mainFaturamento.map((f, i) => f >= mainCustos[i] ? '#10b981' : '#ef4444');
+                    state.chartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: mainLabels,
+                            datasets: [
+                                { label: 'Faturamento (Margem)', data: mainFaturamento, backgroundColor: mainColors, borderRadius: 4 },
+                                { label: 'Custos Totais', data: mainCustos, backgroundColor: '#4b5563', borderRadius: 4 }
+                            ]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                            scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } },
+                            plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
+                        }
+                    });
+                }
             }
 
-            const labels = sorted.map(c => { const p = c.month.split('-'); return p[1]+'/'+p[0].substring(2); });
-            state.chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Faturamento (Margem)', data: sorted.map(c => c.margemTotalRealizada), backgroundColor: '#dc2626', borderRadius: 4 },
-                        { label: 'Custos Totais', data: sorted.map(c => c.custosTotais), backgroundColor: '#4b5563', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                    scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } },
-                    plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
+            // Member Chart
+            if (mCtx) {
+                if (state.memberChartInstance) state.memberChartInstance.destroy();
+
+                if (!state.selectedMemberId || state.team.length === 0) {
+                    state.memberChartInstance = new Chart(mCtx, {
+                        type: 'bar', data: { labels: ['Sem Dados'], datasets: [{ label: 'Nenhum membro selecionado', data: [0], backgroundColor: '#333', borderRadius: 4 }] },
+                        options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
+                    });
+                } else {
+                    const member = state.team.find(m => m.id === state.selectedMemberId);
+                    const memberCost = Number(member.cost || 0);
+
+                    let mLabels = [];
+                    let mMargins = [];
+                    let mCosts = [];
+
+                    if (state.filterMode === 'forecast') {
+                        mLabels = ['Projeção'];
+                        const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id), 0);
+                        mMargins = [margin];
+                        mCosts = [memberCost];
+                    } else if (state.filterMode === 'month') {
+                        mLabels = [state.selectedMonth];
+                        const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                        const margin = moTrans.reduce((sum, t) => {
+                            const c = state.clients.find(x => x.id === t.clientId);
+                            return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
+                        }, 0);
+                        mMargins = [margin];
+                        mCosts = [memberCost];
+                    } else {
+                        const closuresToUse = state.filterMode === 'year' ? state.closures.filter(c => c.month.startsWith(state.selectedYear)) : state.closures;
+                        const sortedC = [...closuresToUse].sort((a,b) => a.month.localeCompare(b.month));
+                        mLabels = sortedC.map(c => { const p = c.month.split('-'); return p[1]+'/'+p[0].substring(2); });
+                        
+                        mMargins = sortedC.map(closure => {
+                            const moTrans = state.transactions.filter(t => t.month === closure.month);
+                            return moTrans.reduce((sum, t) => {
+                                const c = state.clients.find(x => x.id === t.clientId);
+                                return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
+                            }, 0);
+                        });
+                        mCosts = sortedC.map(() => memberCost); 
+                    }
+
+                    const memberColors = mMargins.map((m, i) => m >= mCosts[i] ? '#10b981' : '#ef4444');
+
+                    state.memberChartInstance = new Chart(mCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: mLabels,
+                            datasets: [
+                                { label: 'Faturamento Repassado (Margem)', data: mMargins, backgroundColor: memberColors, borderRadius: 4 },
+                                { label: 'Custo Fixo (Salário)', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 }
+                            ]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                            scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } },
+                            plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
+                        }
+                    });
                 }
-            });
+            }
         }
 
         function renderContent() {
             const content = document.getElementById('tab-content');
             content.classList.remove('animate-fade-in');
-            void content.offsetWidth; // trigger reflow for animation restart
+            void content.offsetWidth; 
             content.classList.add('animate-fade-in');
 
             if (state.activeTab === 'dashboard') { 
                 content.innerHTML = getDashboardHTML(); 
-                if(state.filterMode === 'year' || state.filterMode === 'all') {
-                    setTimeout(renderChart, 50); 
-                }
+                setTimeout(renderChart, 50); 
             }
             else if (state.activeTab === 'clients') content.innerHTML = getClientsHTML();
             else if (state.activeTab === 'team') content.innerHTML = getTeamHTML();
@@ -586,8 +677,19 @@
         function getDashboardHTML() {
             const mode = state.filterMode;
 
+            // Auto-select most profitable member if none selected
+            if (state.team.length > 0 && (!state.selectedMemberId || !state.team.find(m => m.id === state.selectedMemberId))) {
+                let bestId = state.team[0].id;
+                let maxProfit = -Infinity;
+                state.team.forEach(m => {
+                    const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, m.id), 0);
+                    const profit = margin - Number(m.cost || 0);
+                    if (profit > maxProfit) { maxProfit = profit; bestId = m.id; }
+                });
+                state.selectedMemberId = bestId;
+            }
+
             if (mode === 'forecast') {
-                // --- VISÃO PREVISTO (CONTRATOS ATIVOS HOJE) ---
                 const activeC = state.clients.filter(c => c.status !== 'Churn');
                 const prevMRR = activeC.reduce((a, c) => a + Number(c.recurringValue || 0), 0);
                 const prevOT = activeC.reduce((a, c) => a + Number(c.oneTimeValue || 0), 0);
@@ -628,6 +730,31 @@
                                 <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Lucro Potencial</h3>
                                 <div class="text-4xl font-black text-white">${formatCurrency(lucroPrevisto)}</div>
                                 <p class="text-xs text-white/50 font-medium mt-2">Cenário ideal se todos pagarem hoje.</p>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos Integrados -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+                            <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Faturamento vs Custo</h3>
+                                    <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Projeção Atual</span>
+                                </div>
+                                <div class="h-80 w-full relative flex-1">
+                                    <canvas id="yearlyChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
+                                    <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${m.id}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="h-80 w-full relative flex-1">
+                                    <canvas id="memberChart"></canvas>
+                                </div>
                             </div>
                         </div>
 
@@ -702,18 +829,32 @@
                             </div>
                         </div>
                         
-                        <!-- Gráfico Principal -->
-                        <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-xl font-bold text-white tracking-tight">Análise de Crescimento em ${contextYear}</h3>
-                                <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Apenas meses fechados</span>
+                        <!-- Gráficos Integrados -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+                            <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Crescimento em ${contextYear}</h3>
+                                    <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Apenas Meses Fechados</span>
+                                </div>
+                                <div class="h-80 w-full relative flex-1">
+                                    <canvas id="yearlyChart"></canvas>
+                                </div>
                             </div>
-                            <div class="h-80 w-full relative">
-                                <canvas id="yearlyChart"></canvas>
+
+                            <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
+                                    <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${m.id}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="h-80 w-full relative flex-1">
+                                    <canvas id="memberChart"></canvas>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-lg">
                                 <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Resumo (${contextYear})</h3>
                                 <div class="space-y-4">
@@ -785,13 +926,38 @@
                             
                             <div class="p-6 rounded-2xl ${lucro >= 0 ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-950/10 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 to-red-950/10 border-red-500/50'} border shadow-lg relative overflow-hidden group">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="wallet" class="w-16 h-16 ${lucro>=0?'text-emerald-400':'text-red-400'}"></i></div>
-                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado do Mês Atual</h3>
+                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado de ${state.selectedMonth}</h3>
                                 <div class="text-4xl font-black text-white">${formatCurrency(lucro)}</div>
                                 <p class="text-xs text-white/50 font-medium mt-2">${lucro >= 0 ? '👍 Caixa Positivo.' : '⚠️ Atenção: Prejuízo ou faltam baixas.'}</p>
                             </div>
                         </div>
                         
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Gráficos Integrados -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+                            <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
+                                <div class="flex items-center justify-between mb-6">
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Faturamento vs Custo</h3>
+                                    <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Tempo Real</span>
+                                </div>
+                                <div class="h-80 w-full relative flex-1">
+                                    <canvas id="yearlyChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
+                                    <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${m.id}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${m.name}</option>`).join('')}
+                                    </select>
+                                </div>
+                                <div class="h-80 w-full relative flex-1">
+                                    <canvas id="memberChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-lg">
                                 <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Desempenho de Cobrança (${state.selectedMonth})</h3>
                                 <div class="space-y-6">
@@ -943,7 +1109,6 @@
                 html += `<div class="col-span-full py-20 text-center border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="users" class="w-12 h-12 mx-auto text-gray-600 mb-4 opacity-50"></i><p class="text-gray-400 font-medium">Nenhum membro na equipe ainda.</p></div>`;
             } else {
                 html += state.team.map(member => {
-                    // Cálculo Refinado Múltiplos Projetos/Membros
                     const memberClients = state.clients.filter(c => c.status !== 'Churn');
                     const mrrMcGerado = memberClients.reduce((acc, c) => {
                         let pct = 0;
@@ -956,7 +1121,6 @@
                         return acc + (calcMargin(Number(c.recurringValue||0)) * (pct/100));
                     }, 0);
 
-                    // Lista Projetos associados
                     const activeProjects = memberClients.filter(c => {
                         if (c.teamAllocations) return c.teamAllocations.some(a => a.memberId === member.id);
                         return c.assignedMemberId === member.id;
@@ -1240,6 +1404,11 @@
                 renderContent();
             },
 
+            setMemberChart: (id) => {
+                state.selectedMemberId = id;
+                renderChart();
+            },
+
             toggleAuthMode: () => { 
                 state.isSignUpMode = !state.isSignUpMode; 
                 document.getElementById('name-field').classList.toggle('hidden', !state.isSignUpMode); 
@@ -1487,13 +1656,7 @@
                 if(!member) return;
 
                 const activeProjects = state.clients.filter(c => c.status !== 'Churn').map(c => {
-                    let pct = 0;
-                    if (c.teamAllocations && Array.isArray(c.teamAllocations)) {
-                        const alloc = c.teamAllocations.find(a => a.memberId === member.id);
-                        if (alloc) pct = alloc.percentage;
-                    } else if (c.assignedMemberId === member.id) {
-                        pct = c.memberPercentage || 100;
-                    }
+                    let pct = getMemberPct(c, member.id) * 100;
                     
                     if(pct > 0) {
                         const margin = calcMargin(Number(c.recurringValue||0));
