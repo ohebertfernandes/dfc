@@ -44,7 +44,6 @@
     <!-- TELA DE LOGIN -->
     <div id="login-screen" class="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center p-4 transition-all duration-700">
         <div class="w-full max-w-md bg-[#141414] border border-[#2a2a2a] rounded-2xl p-8 shadow-2xl animate-scale-in relative overflow-hidden">
-            <!-- Efeito de brilho sutil no topo -->
             <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-900 via-red-500 to-red-900 opacity-50"></div>
             
             <div class="flex justify-center mb-8">
@@ -157,7 +156,7 @@
                         <span id="user-greeting" class="text-sm font-bold text-white hidden"></span>
                     </div>
                     
-                    <!-- Filtro Quádruplo (Mensal / Anual / Geral / Previsto) -->
+                    <!-- Filtro Quádruplo -->
                     <div class="flex bg-[#1a1a1a] rounded-lg border border-[#333] p-1">
                         <button id="filter-btn-month" onclick="window.appActions.setFilterMode('month')" class="px-4 py-1.5 text-xs font-bold rounded-md bg-[#333] text-white shadow-sm transition-all">Mensal</button>
                         <button id="filter-btn-year" onclick="window.appActions.setFilterMode('year')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Anual</button>
@@ -175,7 +174,6 @@
                     <div class="relative hidden" id="filter-year-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <select id="selected-year" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222] appearance-none">
-                            <!-- Populated via JS -->
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
                     </div>
@@ -197,7 +195,6 @@
             </div>
             
             <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
-                <!-- Esquerda: Dados Cadastrais -->
                 <div class="space-y-5">
                     <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest border-b border-[#333] pb-2">Dados do Projeto</h3>
                     <input type="hidden" id="client-id" />
@@ -211,7 +208,7 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Fase Atual</label>
                             <div class="relative">
-                                <select id="client-phase" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none appearance-none">
+                                <select id="client-phase" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none appearance-none">
                                     <option value="Tratativa">Tratativa</option>
                                     <option value="Implementação">Implementação</option>
                                     <option value="Manutenção">Manutenção</option>
@@ -222,7 +219,7 @@
                         <div>
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Status</label>
                             <div class="relative">
-                                <select id="client-status" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none appearance-none">
+                                <select id="client-status" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none appearance-none">
                                     <option value="Ativo">🟢 Ativo</option>
                                     <option value="Churn">🔴 Churn (Cancelado)</option>
                                 </select>
@@ -256,26 +253,21 @@
                         </div>
                     </div>
 
-                    <!-- Equipe / Comissionamento (Múltiplos) -->
                     <div class="bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mt-4 relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
                         <div class="flex justify-between items-center mb-3">
                             <h4 class="text-xs font-bold text-red-400 uppercase tracking-wider">Responsabilidade & Repasse</h4>
                             <button type="button" onclick="window.appActions.addTeamAllocationRow()" class="text-[10px] bg-[#2a2a2a] hover:bg-[#444] text-white px-2.5 py-1.5 rounded shadow-sm font-bold uppercase transition-colors flex items-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Membro</button>
                         </div>
-                        <div id="team-allocations-container" class="space-y-3">
-                            <!-- Selects inseridos dinamicamente aqui -->
-                        </div>
+                        <div id="team-allocations-container" class="space-y-3"></div>
                         <p class="text-[10px] text-gray-500 mt-3 italic">Define quem recebe a margem de lucro e a porcentagem individual.</p>
                     </div>
                 </div>
 
-                <!-- Direita: Dados Financeiros DFC -->
                 <div class="space-y-5">
                     <h3 class="text-sm font-bold text-red-500 uppercase tracking-widest border-b border-red-900/50 pb-2">Impacto no DFC (Valores)</h3>
                     
                     <div class="bg-[#111] border border-[#222] rounded-xl p-5 space-y-5 shadow-inner">
-                        <!-- Recorrente -->
                         <div>
                             <div class="flex justify-between items-end mb-1.5">
                                 <label class="block text-xs font-bold text-gray-300 uppercase">MRR Bruto (Recorrente) <span class="text-red-500">*</span></label>
@@ -284,15 +276,13 @@
                             <div class="flex gap-3">
                                 <div class="relative flex-1">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
-                                    <input type="text" id="client-recurringValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#444] rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 transition-all outline-none" placeholder="0,00" />
+                                    <input type="text" id="client-recurringValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#444] rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" placeholder="0,00" />
                                 </div>
                                 <div class="flex-1 bg-[#050505] border border-[#333] rounded-lg flex items-center px-4">
                                     <span id="client-recurringMargin" class="text-emerald-400 font-mono font-bold w-full text-right">R$ 0,00</span>
                                 </div>
                             </div>
                         </div>
-
-                        <!-- One Time -->
                         <div class="pt-4 border-t border-[#222]">
                             <div class="flex justify-between items-end mb-1.5">
                                 <label class="block text-xs font-bold text-gray-300 uppercase">Setup / One Time</label>
@@ -301,7 +291,7 @@
                             <div class="flex gap-3">
                                 <div class="relative flex-1">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
-                                    <input type="text" id="client-oneTimeValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#444] rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 transition-all outline-none" placeholder="0,00" />
+                                    <input type="text" id="client-oneTimeValue" class="currency-mask w-full bg-[#0a0a0a] border border-[#444] rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" placeholder="0,00" />
                                 </div>
                                 <div class="flex-1 bg-[#050505] border border-[#333] rounded-lg flex items-center px-4">
                                     <span id="client-oneTimeMargin" class="text-emerald-400 font-mono font-bold w-full text-right">R$ 0,00</span>
@@ -313,9 +303,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Data de Entrega / Início</label>
-                            <div class="relative">
-                                <input type="date" id="client-deliveryDate" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" style="color-scheme: dark;" />
-                            </div>
+                            <input type="date" id="client-deliveryDate" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" style="color-scheme: dark;" />
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Nota NPS (0 a 10)</label>
@@ -324,20 +312,19 @@
                     </div>
                 </div>
                 
-                <!-- Observações Largura Total -->
                 <div class="lg:col-span-2 pt-2 border-t border-[#222]">
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Observações do Projeto ou Motivo do Churn</label>
-                    <textarea id="client-observation" rows="3" class="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4 text-white focus:border-red-500 outline-none resize-none" placeholder="Detalhes importantes..."></textarea>
+                    <textarea id="client-observation" rows="3" class="w-full bg-[#0a0a0a] border border-[#333] rounded-xl p-4 text-white focus:border-red-500 outline-none resize-none"></textarea>
                 </div>
             </div>
             
             <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-4 sticky bottom-0 z-20 rounded-b-2xl">
-                <button onclick="window.appActions.closeModal()" class="px-6 py-3 rounded-lg font-bold text-gray-400 hover:text-white hover:bg-[#222] transition-colors">Cancelar</button>
+                <button onclick="window.appActions.closeModal()" class="px-6 py-3 rounded-lg font-bold text-gray-400 hover:text-white hover:bg-[#222]">Cancelar</button>
                 <button onclick="window.appActions.saveClient()" class="bg-red-600 hover:bg-red-700 text-white px-10 py-3 rounded-lg font-bold transition-all shadow-lg shadow-red-900/40 hover:-translate-y-0.5">Salvar e Atualizar DFC</button>
             </div>
         </div>
         
-        <!-- Modal Team Form -->
+        <!-- Modal Team -->
         <div id="modal-team" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center bg-[#111]">
                 <h2 id="team-modal-title" class="text-xl font-bold text-white tracking-tight">Equipe (Custos Fixos)</h2>
@@ -348,17 +335,17 @@
                 <input type="hidden" id="team-id" />
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Nome do Integrante</label>
-                    <input type="text" id="team-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: João Silva" />
+                    <input type="text" id="team-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Cargo / Função</label>
-                    <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: SDR" />
+                    <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Fixo Mensal Negociado (R$)</label>
+                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Fixo Mensal (R$)</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
-                        <input type="text" id="team-cost" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" placeholder="0,00" />
+                        <input type="text" id="team-cost" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" />
                     </div>
                 </div>
             </div>
@@ -396,16 +383,39 @@
                     </div>
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-red-500 mb-1.5 uppercase">Custos (Equipe + Fornec.)</label>
+                    <label class="block text-[10px] font-bold text-red-500 mb-1.5 uppercase">Custos Totais</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
                         <input type="text" id="history-cost" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-2.5 pl-9 text-white focus:border-red-500 outline-none" />
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-[#2a2a2a]">
+                    <h3 class="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Faturamento por Integrante (Apenas Margem Limpa)</h3>
+                    <div id="history-members-container" class="space-y-2 max-h-32 overflow-y-auto pr-2 scrollbar-hide">
+                        <!-- JS injects here -->
                     </div>
                 </div>
             </div>
             <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3">
                 <button onclick="window.appActions.closeModal()" class="px-5 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white transition-colors hover:bg-[#222]">Cancelar</button>
                 <button onclick="window.appActions.saveHistory()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-emerald-900/30 transition-transform hover:-translate-y-0.5">Sobrescrever Histórico</button>
+            </div>
+        </div>
+
+        <!-- NOVO: Modal Member Dashboard -->
+        <div id="modal-member-dashboard" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col animate-scale-in relative">
+                <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-red-900/30 border border-red-500/50 rounded-full flex items-center justify-center font-black text-red-400 shadow-inner"><i data-lucide="bar-chart-2" class="w-5 h-5"></i></div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight" id="member-dash-title">Dashboard do Integrante</h2>
+                    </div>
+                    <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] hover:bg-[#333] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="p-6 md:p-8" id="member-dash-content">
+                    <!-- Conteudo Dinamico -->
+                </div>
             </div>
         </div>
 
@@ -417,7 +427,6 @@
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        // Configuração Firebase (Fallback de Proteção + Injeção do Ambiente)
         const fallbackConfig = {
             apiKey: "AIzaSyDML8GP1iSR92I-07L3cUhe9B3AwIuuQnM",
             authDomain: "squaddfc-a7f0e.firebaseapp.com",
@@ -437,11 +446,10 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e';
 
-        // Estado Global da Aplicação
         const state = {
             user: null, 
             activeTab: 'dashboard',
-            filterMode: 'month', // 'month', 'year', 'all', 'forecast'
+            filterMode: 'month',
             clients: [], transactions: [], team: [], closures: [],
             selectedMonth: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; })(),
             selectedYear: new Date().getFullYear().toString(),
@@ -452,7 +460,6 @@
             selectedMemberId: null
         };
 
-        // Regras de Negócio e Fórmulas Matemáticas do DFC
         const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
         const formatNumberToBR = (val) => (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         const calcMargin = (val) => val ? (val * 0.7075) * 0.35 : 0;
@@ -467,7 +474,6 @@
             return 0;
         };
 
-        // Controle de DOM (Máscaras R$)
         function setupCurrencyMasks() {
             document.querySelectorAll('.currency-mask').forEach(input => {
                 const newInp = input.cloneNode(true);
@@ -477,7 +483,6 @@
                     if (val === '') { e.target.dataset.value = 0; e.target.value = ''; }
                     else { let num = Number(val) / 100; e.target.dataset.value = num; e.target.value = formatNumberToBR(num); }
                     
-                    // Cálculo ao vivo nos modais
                     if(newInp.id === 'client-recurringValue') document.getElementById('client-recurringMargin').innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
                     if(newInp.id === 'client-oneTimeValue') document.getElementById('client-oneTimeMargin').innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
                 });
@@ -492,7 +497,6 @@
             return el ? Number(el.dataset.value || 0) : 0;
         }
 
-        // Renderização Dinâmica do Sistema
         function renderNav() {
             const tabs = [
                 { id: 'dashboard', icon: 'layout-dashboard', label: 'Painel DFC' },
@@ -526,9 +530,7 @@
             const mCtx = document.getElementById('memberChart');
             
             if (ctx) {
-                let mainLabels = [];
-                let mainFaturamento = [];
-                let mainCustos = [];
+                let mainLabels = [], mainFaturamento = [], mainCustos = [];
                 
                 if (state.filterMode === 'forecast') {
                     mainLabels = ['Projeção'];
@@ -536,7 +538,6 @@
                     const prevMarginRec = activeC.reduce((a, c) => a + calcMargin(Number(c.recurringValue||0)), 0);
                     const prevMarginOT = activeC.reduce((a, c) => a + calcMargin(Number(c.oneTimeValue||0)), 0);
                     mainFaturamento = [prevMarginRec + prevMarginOT];
-                    
                     const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
                     const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
                     mainCustos = [cFixo + cVarFornecedores];
@@ -544,7 +545,6 @@
                     mainLabels = [state.selectedMonth];
                     const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                     mainFaturamento = [moTrans.reduce((a, c) => a + c.marginValue, 0)];
-                    
                     const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
                     const activeC = state.clients.filter(c => c.status !== 'Churn');
                     const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
@@ -570,23 +570,12 @@
                     const mainColors = mainFaturamento.map((f, i) => f >= mainCustos[i] ? '#10b981' : '#ef4444');
                     state.chartInstance = new Chart(ctx, {
                         type: 'bar',
-                        data: {
-                            labels: mainLabels,
-                            datasets: [
-                                { label: 'Faturamento (Margem)', data: mainFaturamento, backgroundColor: mainColors, borderRadius: 4 },
-                                { label: 'Custos Totais', data: mainCustos, backgroundColor: '#4b5563', borderRadius: 4 }
-                            ]
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                            scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } },
-                            plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
-                        }
+                        data: { labels: mainLabels, datasets: [{ label: 'Faturamento (Margem)', data: mainFaturamento, backgroundColor: mainColors, borderRadius: 4 }, { label: 'Custos Totais', data: mainCustos, backgroundColor: '#4b5563', borderRadius: 4 }] },
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } }, plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
                     });
                 }
             }
 
-            // Member Chart
             if (mCtx) {
                 if (state.memberChartInstance) state.memberChartInstance.destroy();
 
@@ -599,15 +588,12 @@
                     const member = state.team.find(m => m.id === state.selectedMemberId);
                     const memberCost = Number(member.cost || 0);
 
-                    let mLabels = [];
-                    let mMargins = [];
-                    let mCosts = [];
+                    let mLabels = [], mMargins = [], mCosts = [];
 
                     if (state.filterMode === 'forecast') {
                         mLabels = ['Projeção'];
                         const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id), 0);
-                        mMargins = [margin];
-                        mCosts = [memberCost];
+                        mMargins = [margin]; mCosts = [memberCost];
                     } else if (state.filterMode === 'month') {
                         mLabels = [state.selectedMonth];
                         const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
@@ -615,14 +601,17 @@
                             const c = state.clients.find(x => x.id === t.clientId);
                             return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
                         }, 0);
-                        mMargins = [margin];
-                        mCosts = [memberCost];
+                        mMargins = [margin]; mCosts = [memberCost];
                     } else {
-                        const closuresToUse = state.filterMode === 'year' ? state.closures.filter(c => c.month.startsWith(state.selectedYear)) : state.closures;
+                        const isAll = state.filterMode === 'all';
+                        const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(state.selectedYear));
                         const sortedC = [...closuresToUse].sort((a,b) => a.month.localeCompare(b.month));
                         mLabels = sortedC.map(c => { const p = c.month.split('-'); return p[1]+'/'+p[0].substring(2); });
                         
                         mMargins = sortedC.map(closure => {
+                            if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) {
+                                return closure.memberMargins[member.id];
+                            }
                             const moTrans = state.transactions.filter(t => t.month === closure.month);
                             return moTrans.reduce((sum, t) => {
                                 const c = state.clients.find(x => x.id === t.clientId);
@@ -636,18 +625,8 @@
 
                     state.memberChartInstance = new Chart(mCtx, {
                         type: 'bar',
-                        data: {
-                            labels: mLabels,
-                            datasets: [
-                                { label: 'Faturamento Repassado (Margem)', data: mMargins, backgroundColor: memberColors, borderRadius: 4 },
-                                { label: 'Custo Fixo (Salário)', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 }
-                            ]
-                        },
-                        options: {
-                            responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                            scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } },
-                            plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
-                        }
+                        data: { labels: mLabels, datasets: [{ label: 'Faturamento Repassado', data: mMargins, backgroundColor: memberColors, borderRadius: 4 }, { label: 'Custo Fixo (Salário)', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 }] },
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } }, plugins: { legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } }
                     });
                 }
             }
@@ -677,7 +656,6 @@
         function getDashboardHTML() {
             const mode = state.filterMode;
 
-            // Auto-select most profitable member if none selected
             if (state.team.length > 0 && (!state.selectedMemberId || !state.team.find(m => m.id === state.selectedMemberId))) {
                 let bestId = state.team[0].id;
                 let maxProfit = -Infinity;
@@ -794,14 +772,14 @@
                 `;
 
             } else if (mode === 'year' || mode === 'all') {
-                // --- VISÃO ANUAL OU GERAL (HISTÓRICO FECHADO) ---
-                const contextYear = mode === 'year' ? state.selectedYear : 'Todo o Período';
-                const closuresToUse = mode === 'year' ? state.closures.filter(c => c.month.startsWith(state.selectedYear)) : state.closures;
+                const isAll = mode === 'all';
+                const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
+                const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month.startsWith(state.selectedYear));
                 
                 const realMRR = closuresToUse.reduce((a, c) => a + Number(c.mrrBrutoRealizado||0), 0);
                 const realMargin = closuresToUse.reduce((a, c) => a + Number(c.margemTotalRealizada||0), 0);
                 const lucro = closuresToUse.reduce((a, c) => a + Number(c.lucroLiquido||0), 0);
-                const cFixo = closuresToUse.reduce((a, c) => a + Number(c.custosTotais||0), 0); // Custos totais consolidados no Histórico
+                const cFixo = closuresToUse.reduce((a, c) => a + Number(c.custosTotais||0), 0); 
                 const monthsClosed = closuresToUse.length;
                 const avgProfit = monthsClosed > 0 ? lucro / monthsClosed : 0;
 
@@ -812,7 +790,7 @@
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="trending-up" class="w-16 h-16 text-gray-400"></i></div>
                                 <h3 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div> MRR Bruto Realizado (${contextYear})</h3>
                                 <div class="text-3xl font-bold text-white mb-1">${formatCurrency(realMRR)}</div>
-                                <p class="text-xs text-gray-600 font-medium mt-2">Total bruto de todos os meses.</p>
+                                <p class="text-xs text-gray-600 font-medium mt-2">Total bruto de todos os meses fechados.</p>
                             </div>
                             
                             <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/20 to-[#0a0a0a] border border-emerald-900/30 shadow-lg relative overflow-hidden group">
@@ -860,7 +838,7 @@
                                 <div class="space-y-4">
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
                                         <span class="font-medium text-gray-400">Meses Fechados</span>
-                                        <span class="font-bold text-white">${monthsClosed} ${mode === 'year' ? 'de 12' : 'meses'}</span>
+                                        <span class="font-bold text-white">${monthsClosed} ${isAll ? 'meses' : 'de 12'}</span>
                                     </div>
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
                                         <span class="font-medium text-gray-400">Média de Lucro Mensal</span>
@@ -1033,14 +1011,13 @@
                 const otTrans = cTrans.find(t => t.type === 'onetime');
                 const isChurn = client.status === 'Churn';
                 
-                // Tratar Exibição Múltiplos Membros
                 let teamBadges = '';
                 if (client.teamAllocations && client.teamAllocations.length > 0) {
                     teamBadges = client.teamAllocations.map(alloc => {
                         const m = state.team.find(x => x.id === alloc.memberId);
                         return m ? `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${m.name.split(' ')[0]} (${alloc.percentage}%)</span>` : '';
                     }).join('');
-                } else if (client.assignedMemberId) { // Fallback para projetos criados antes da atualização
+                } else if (client.assignedMemberId) { 
                     const m = state.team.find(x => x.id === client.assignedMemberId);
                     if (m) teamBadges = `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${m.name.split(' ')[0]} (${client.memberPercentage||100}%)</span>`;
                 }
@@ -1076,7 +1053,7 @@
                                     <div class="flex flex-col"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">MRR</span><span class="font-bold text-gray-200 text-sm">${formatCurrency(client.recurringValue)}</span></div>
                                     ${recTrans 
                                         ? `<button onclick="window.appActions.removeBaixa('${recTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
-                                        : `<button onclick="window.appActions.darBaixa('${client.id}', '${client.name}', ${client.recurringValue}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`
+                                        : `<button onclick="window.appActions.darBaixa('${client.id}', ${client.recurringValue}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`
                                     }
                                 </div>` : ''}
                             ${Number(client.oneTimeValue)>0 ? `
@@ -1084,7 +1061,7 @@
                                     <div class="flex flex-col"><span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider">One Time</span><span class="font-bold text-gray-200 text-sm">${formatCurrency(client.oneTimeValue)}</span></div>
                                     ${otTrans 
                                         ? `<button onclick="window.appActions.removeBaixa('${otTrans.id}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`
-                                        : `<button onclick="window.appActions.darBaixa('${client.id}', '${client.name}', ${client.oneTimeValue}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`
+                                        : `<button onclick="window.appActions.darBaixa('${client.id}', ${client.oneTimeValue}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`
                                     }
                                 </div>` : ''}
                         </div>` : ''}
@@ -1111,14 +1088,8 @@
                 html += state.team.map(member => {
                     const memberClients = state.clients.filter(c => c.status !== 'Churn');
                     const mrrMcGerado = memberClients.reduce((acc, c) => {
-                        let pct = 0;
-                        if (c.teamAllocations && Array.isArray(c.teamAllocations)) {
-                            const alloc = c.teamAllocations.find(a => a.memberId === member.id);
-                            if (alloc) pct = alloc.percentage;
-                        } else if (c.assignedMemberId === member.id) {
-                            pct = c.memberPercentage || 100;
-                        }
-                        return acc + (calcMargin(Number(c.recurringValue||0)) * (pct/100));
+                        let pct = getMemberPct(c, member.id);
+                        return acc + (calcMargin(Number(c.recurringValue||0)) * pct);
                     }, 0);
 
                     const activeProjects = memberClients.filter(c => {
@@ -1131,7 +1102,7 @@
                     
                     return `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard('${member.id}')">
-                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                             <button onclick="event.stopPropagation(); window.appActions.openTeamModal('${member.id}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
                             <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${member.id}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
@@ -1230,7 +1201,6 @@
                 `;
             });
 
-            // Linha de Totais da Tabela
             if(validClients.length > 0) {
                  html += `
                     <tr class="bg-[#0a0a0a] border-t-2 border-[#333]">
@@ -1256,7 +1226,6 @@
             return html;
         }
 
-        // --- (Continua as outras funções, mantendo o History e Profile idênticos) ---
         function getHistoryHTML() {
             let html = `
                 <div class="animate-fade-in">
@@ -1504,7 +1473,6 @@
                 }; reader.readAsDataURL(file);
             },
 
-            // Multiple Team Members Allocation Form Logic
             addTeamAllocationRow: (memberId = '', pct = 100) => {
                 const container = document.getElementById('team-allocations-container');
                 const row = document.createElement('div');
@@ -1552,7 +1520,6 @@
                     document.getElementById('client-nps').value = c.nps || '';
                     document.getElementById('client-observation').value = c.observation || '';
 
-                    // Preencher Alocações de Equipe
                     if (c.teamAllocations && c.teamAllocations.length > 0) {
                         c.teamAllocations.forEach(alloc => window.appActions.addTeamAllocationRow(alloc.memberId, alloc.percentage));
                     } else if (c.assignedMemberId) {
@@ -1595,7 +1562,6 @@
                 if(!state.user) return;
                 const cid = document.getElementById('client-id').value;
 
-                // Capturar Equipe Alocada (Array)
                 const teamAllocations = Array.from(document.querySelectorAll('.team-allocation-row')).map(row => {
                     return {
                         memberId: row.querySelector('.alloc-member').value,
@@ -1619,9 +1585,11 @@
                 } catch(e) { console.error(e); }
             },
 
-            darBaixa: async (clientId, clientName, value, type) => {
+            darBaixa: async (clientId, value, type) => {
                 if(!state.user) return;
-                try { await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'transactions'), { clientId, clientName, month: state.selectedMonth, value: Number(value), marginValue: calcMargin(Number(value)), type, createdAt: new Date().toISOString() }); } 
+                const client = state.clients.find(c => c.id === clientId);
+                if (!client) return;
+                try { await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'transactions'), { clientId, clientName: client.name, month: state.selectedMonth, value: Number(value), marginValue: calcMargin(Number(value)), type, createdAt: new Date().toISOString() }); } 
                 catch(e) { console.error(e); }
             },
             removeBaixa: async (tid) => { if(!state.user) return; try { await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'transactions', tid)); } catch(e) { console.error(e); } },
@@ -1655,9 +1623,38 @@
                 const member = state.team.find(m => m.id === id);
                 if(!member) return;
 
+                let mrrMcGerado = 0;
+                let mCostTotal = 0;
+                let subtitle = '';
+
+                if (state.filterMode === 'forecast') {
+                    subtitle = 'Projeção (Run Rate Atual)';
+                    mCostTotal = Number(member.cost||0);
+                    mrrMcGerado = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id), 0);
+                } else if (state.filterMode === 'month') {
+                    subtitle = `Realizado em ${state.selectedMonth}`;
+                    mCostTotal = Number(member.cost||0);
+                    const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                    mrrMcGerado = moTrans.reduce((sum, t) => {
+                        const c = state.clients.find(x => x.id === t.clientId);
+                        return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
+                    }, 0);
+                } else {
+                    const contextYear = state.filterMode === 'year' ? state.selectedYear : 'Todo o Período Histórico';
+                    subtitle = `Acumulado Histórico (${contextYear})`;
+                    const closuresToUse = state.filterMode === 'year' ? state.closures.filter(c => c.month.startsWith(state.selectedYear)) : state.closures;
+                    
+                    mrrMcGerado = closuresToUse.reduce((sum, closure) => {
+                        if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) return sum + closure.memberMargins[member.id];
+                        const moTrans = state.transactions.filter(t => t.month === closure.month);
+                        return sum + moTrans.reduce((s, t) => { const c = state.clients.find(x => x.id === t.clientId); return s + (c ? t.marginValue * getMemberPct(c, member.id) : 0); }, 0);
+                    }, 0);
+                    mCostTotal = Number(member.cost||0) * closuresToUse.length;
+                }
+
+                const lucro = mrrMcGerado - mCostTotal;
                 const activeProjects = state.clients.filter(c => c.status !== 'Churn').map(c => {
                     let pct = getMemberPct(c, member.id) * 100;
-                    
                     if(pct > 0) {
                         const margin = calcMargin(Number(c.recurringValue||0));
                         const memberCut = margin * (pct/100);
@@ -1666,10 +1663,6 @@
                     return null;
                 }).filter(Boolean);
 
-                const mrrMcGerado = activeProjects.reduce((acc, p) => acc + p.memberCut, 0);
-                const mCost = Number(member.cost||0);
-                const lucro = mrrMcGerado - mCost;
-
                 document.getElementById('member-dash-title').innerText = `Performance: ${member.name.split(' ')[0]}`;
 
                 let html = `
@@ -1677,17 +1670,17 @@
                         <div class="w-16 h-16 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-3xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${member.name.charAt(0).toUpperCase()}</div>
                         <div>
                             <h3 class="font-black text-2xl text-white tracking-tight">${member.name}</h3>
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">${member.role || 'Membro da Equipe'}</p>
+                            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">${subtitle}</p>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
                         <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Custo Mensal (Salário)</h4>
-                            <div class="text-3xl font-black text-white">${formatCurrency(mCost)}</div>
+                            <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Custo Base</h4>
+                            <div class="text-3xl font-black text-white">${formatCurrency(mCostTotal)}</div>
                         </div>
                         <div class="bg-emerald-950/20 border border-emerald-900/30 rounded-2xl p-6 shadow-lg relative overflow-hidden">
-                            <h4 class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2">Sua Parte da Margem</h4>
+                            <h4 class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mb-2">Sua Margem Gerada</h4>
                             <div class="text-3xl font-black text-emerald-400">${formatCurrency(mrrMcGerado)}</div>
                         </div>
                         <div class="bg-[#111] border ${lucro >= 0 ? 'border-emerald-500/50 shadow-emerald-900/10' : 'border-red-500/50 shadow-red-900/10'} rounded-2xl p-6 shadow-lg relative overflow-hidden">
@@ -1696,15 +1689,15 @@
                         </div>
                     </div>
 
-                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-[#333] pb-2">Seus Projetos Ativos (${activeProjects.length})</h3>
+                    <h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4 border-b border-[#333] pb-2">Seus Projetos Ativos no Momento (${activeProjects.length})</h3>
                     <div class="overflow-x-auto bg-[#111] rounded-xl border border-[#222]">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-[#0a0a0a] border-b border-[#333] text-[10px] font-black uppercase tracking-widest text-gray-500">
                                     <th class="p-4">Projeto</th>
                                     <th class="p-4 text-center">% Atribuída</th>
-                                    <th class="p-4 text-right">Margem Total DFC</th>
-                                    <th class="p-4 text-right text-emerald-400">Sua Parte (Repasse)</th>
+                                    <th class="p-4 text-right">Margem MRR Projeto</th>
+                                    <th class="p-4 text-right text-emerald-400">Repasse Ideal (Mês)</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#222]">
@@ -1736,17 +1729,31 @@
                 
                 const activeClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
                 
+                const memberMargins = {};
+                
                 activeClients.forEach(c => {
                     const cTrans = moTrans.filter(t => t.clientId === c.id);
                     const recT = cTrans.find(t => t.type === 'recorrente'); const otT = cTrans.find(t => t.type === 'onetime');
-                    tRealRec += recT?recT.value:0; tMargin += (recT?recT.marginValue:0) + (otT?otT.marginValue:0);
+                    tRealRec += recT?recT.value:0; 
+                    
+                    const clientMargin = (recT?recT.marginValue:0) + (otT?otT.marginValue:0);
+                    tMargin += clientMargin;
+                    
+                    // Distribuir margem para os membros permanentemente no fechamento
+                    state.team.forEach(m => {
+                        const pct = getMemberPct(c, m.id);
+                        if(pct > 0) {
+                            if(!memberMargins[m.id]) memberMargins[m.id] = 0;
+                            memberMargins[m.id] += clientMargin * pct;
+                        }
+                    });
                 });
 
                 const cFixo = state.team.reduce((a, c) => a + Number(c.cost||0), 0);
                 const cVarFornecedores = activeClients.reduce((a, c) => a + Number(c.supplierCost||0), 0);
                 const cTotal = cFixo + cVarFornecedores;
 
-                const data = { month: state.selectedMonth, mrrBrutoRealizado: tRealRec, margemTotalRealizada: tMargin, custosTotais: cTotal, lucroLiquido: tMargin - cTotal, locked: true };
+                const data = { month: state.selectedMonth, mrrBrutoRealizado: tRealRec, margemTotalRealizada: tMargin, custosTotais: cTotal, lucroLiquido: tMargin - cTotal, memberMargins: memberMargins, locked: true };
 
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
@@ -1754,84 +1761,4 @@
                 } catch(e) { console.error(e); }
             },
             openHistoryModal: (month = null) => {
-                const m = document.getElementById('modal-history'); const minp = document.getElementById('history-month');
-                if(month) {
-                    const c = state.closures.find(x => x.month === month);
-                    document.getElementById('history-modal-title').innerText = 'Corrigir DFC Histórico'; minp.value = c.month; minp.disabled = true;
-                    setCurrencyInput('history-mrr', c.mrrBrutoRealizado); setCurrencyInput('history-margin', c.margemTotalRealizada); setCurrencyInput('history-cost', c.custosTotais);
-                } else {
-                    document.getElementById('history-modal-title').innerText = 'Lançar Mês Anterior'; minp.value = ''; minp.disabled = false;
-                    setCurrencyInput('history-mrr', 0); setCurrencyInput('history-margin', 0); setCurrencyInput('history-cost', 0);
-                }
-                document.getElementById('modal-backdrop').classList.remove('hidden'); m.classList.remove('hidden'); m.classList.add('flex');
-            },
-            saveHistory: async () => {
-                if(!state.user) return;
-                const data = { month: document.getElementById('history-month').value, mrrBrutoRealizado: getCurrencyInput('history-mrr'), margemTotalRealizada: getCurrencyInput('history-margin'), custosTotais: getCurrencyInput('history-cost') };
-                if(!data.month) return alert('Selecione o mês!');
-                data.lucroLiquido = data.margemTotalRealizada - data.custosTotais; data.locked = true;
-                try {
-                    await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
-                    window.appActions.closeModal();
-                } catch(e) { console.error(e); }
-            }
-        };
-
-        document.getElementById('selected-month').addEventListener('change', (e) => { 
-            state.selectedMonth = e.target.value; updateYearOptions(); renderContent(); 
-        });
-        document.getElementById('selected-year').addEventListener('change', (e) => { 
-            state.selectedYear = e.target.value; renderContent(); 
-        });
-        document.getElementById('selected-month').value = state.selectedMonth;
-
-        function updateHeaderGreeting() {
-            if(!state.user) return;
-            const name = state.user.displayName || (state.user.isAnonymous ? 'Visitante' : 'Usuário Financeiro');
-            const firstName = name.split(' ')[0];
-            document.getElementById('user-greeting').innerHTML = `Logado como: <span class="font-bold text-white">${firstName}</span>`;
-            document.getElementById('user-greeting').classList.remove('hidden');
-            document.getElementById('sidebar-user-name').innerText = name;
-            
-            const avatarInit = name.charAt(0).toUpperCase();
-            if(state.user.photoURL) {
-                document.getElementById('sidebar-avatar-img').src = state.user.photoURL;
-                document.getElementById('sidebar-avatar-img').classList.remove('hidden'); document.getElementById('sidebar-avatar-initial').classList.add('hidden');
-            } else {
-                document.getElementById('sidebar-avatar-initial').innerText = avatarInit;
-                document.getElementById('sidebar-avatar-img').classList.add('hidden'); document.getElementById('sidebar-avatar-initial').classList.remove('hidden');
-            }
-        }
-
-        let unsubListeners = [];
-        onAuthStateChanged(auth, (user) => {
-            state.user = user;
-            const login = document.getElementById('login-screen');
-            const app = document.getElementById('app-screen');
-            
-            if(user) {
-                updateHeaderGreeting();
-                login.classList.add('opacity-0');
-                setTimeout(() => {
-                    login.classList.add('hidden'); app.classList.remove('hidden');
-                    setTimeout(() => app.classList.remove('opacity-0'), 50);
-                }, 500);
-                
-                unsubListeners.forEach(fn => fn()); unsubListeners = [];
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'clients'), s => { state.clients = s.docs.map(d => ({id: d.id, ...d.data()})); updateYearOptions(); renderContent(); }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), s => { state.transactions = s.docs.map(d => ({id: d.id, ...d.data()})); renderContent(); }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'team'), s => { state.team = s.docs.map(d => ({id: d.id, ...d.data()})); renderContent(); }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures'), s => { state.closures = s.docs.map(d => ({id: d.id, ...d.data()})); updateYearOptions(); renderContent(); }));
-            } else {
-                app.classList.add('opacity-0');
-                setTimeout(() => {
-                    app.classList.add('hidden'); login.classList.remove('hidden');
-                    setTimeout(() => login.classList.remove('opacity-0'), 50);
-                }, 500);
-            }
-        });
-
-        renderNav();
-    </script>
-</body>
-</html>
+                const m = document.getElementById('modal-history'); const minp = document.getElementById('history
