@@ -38,6 +38,31 @@
 
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
+
+    <script>
+        // Sistema de Notificações Global e Proxy de Proteção
+        // Evita que cliques rápidos (antes do Firebase carregar) quebrem a aplicação
+        window.showToast = (msg, type = 'success') => {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-xl font-bold text-white shadow-2xl z-[100] transition-all duration-500 transform translate-y-0 opacity-100 flex items-center gap-3 ${type === 'success' ? 'bg-emerald-600 border border-emerald-500/50' : 'bg-red-600 border border-red-500/50'}`;
+            toast.innerHTML = `<span>${msg}</span>`;
+            document.body.appendChild(toast);
+            if(window.lucide) window.lucide.createIcons({root: toast});
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => toast.remove(), 500);
+            }, 3500);
+        };
+
+        window.appActions = new Proxy({}, {
+            get: function(target, prop) {
+                return target[prop] || function() {
+                    window.showToast("Carregando o sistema, por favor aguarde um instante...", "error");
+                };
+            }
+        });
+    </script>
 </head>
 <body class="antialiased">
 
@@ -187,7 +212,7 @@
     <!-- MODAIS -->
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
         
-        <!-- Modal Cliente -->
+        <!-- Modal Cliente Atualizado -->
         <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
                 <h2 id="client-modal-title" class="text-2xl font-bold text-white tracking-tight">Cadastrar Novo Projeto</h2>
@@ -399,7 +424,7 @@
             </div>
             <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3">
                 <button onclick="window.appActions.closeModal()" class="px-5 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white transition-colors hover:bg-[#222]">Cancelar</button>
-                <button id="btn-save-history" onclick="window.appActions.saveHistory()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-emerald-900/30 transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">Salvar Histórico</button>
+                <button id="btn-save-history" onclick="window.appActions.saveHistory()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-emerald-900/30 transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">Sobrescrever Histórico</button>
             </div>
         </div>
 
@@ -427,7 +452,7 @@
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        let firebaseConfig = {
+        const fallbackConfig = {
             apiKey: "AIzaSyDML8GP1iSR92I-07L3cUhe9B3AwIuuQnM",
             authDomain: "squaddfc-a7f0e.firebaseapp.com",
             projectId: "squaddfc-a7f0e",
@@ -436,6 +461,7 @@
             appId: "1:952471267384:web:f253bc3a4e141a80b61ecd"
         };
         
+        let firebaseConfig = fallbackConfig;
         if (typeof __firebase_config !== 'undefined') {
             try { 
                 const parsed = JSON.parse(__firebase_config); 
@@ -461,10 +487,7 @@
             user: null, 
             activeTab: 'dashboard',
             filterMode: 'month',
-            clients: [], 
-            transactions: [], 
-            team: [], 
-            closures: [],
+            clients: [], transactions: [], team: [], closures: [],
             selectedMonth: getInitialMonth(),
             selectedYear: new Date().getFullYear().toString(),
             clientFilter: 'Todos', 
@@ -500,20 +523,6 @@
         const escapeJS = (str) => {
             if (!str) return '';
             return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
-        };
-
-        window.showToast = (msg, type = 'success') => {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-xl font-bold text-white shadow-2xl z-[100] animate-fade-in flex items-center gap-3 ${type === 'success' ? 'bg-emerald-600 border border-emerald-500/50' : 'bg-red-600 border border-red-500/50'}`;
-            toast.innerHTML = `${type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5"></i>' : '<i data-lucide="alert-triangle" class="w-5 h-5"></i>'} <span>${escapeHTML(msg)}</span>`;
-            document.body.appendChild(toast);
-            lucide.createIcons({root: toast});
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-4', 'transition-all', 'duration-500');
-                setTimeout(() => {
-                    toast.remove();
-                }, 500);
-            }, 3500);
         };
 
         const getMemberPct = (client, memberId) => {
@@ -637,12 +646,18 @@
                     mainCustos = [cFixo + cVarFornecedores];
                 } else if (state.filterMode === 'month') {
                     mainLabels = [state.selectedMonth];
-                    const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                    mainFaturamento = [moTrans.reduce((a, c) => a + c.marginValue, 0)];
-                    const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                    const activeC = state.clients.filter(c => c.status !== 'Churn');
-                    const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
-                    mainCustos = [cFixo + cVarFornecedores];
+                    const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
+                    if (closedMonth) {
+                        mainFaturamento = [Number(closedMonth.margemTotalRealizada || 0)];
+                        mainCustos = [Number(closedMonth.custosTotais || 0)];
+                    } else {
+                        const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                        mainFaturamento = [moTrans.reduce((a, c) => a + c.marginValue, 0)];
+                        const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
+                        const activeC = state.clients.filter(c => c.status !== 'Churn');
+                        const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                        mainCustos = [cFixo + cVarFornecedores];
+                    }
                 } else {
                     const isAll = state.filterMode === 'all';
                     const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
@@ -733,13 +748,19 @@
                         mCosts = [memberCost];
                     } else if (state.filterMode === 'month') {
                         mLabels = [state.selectedMonth];
-                        const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                        const margin = moTrans.reduce((sum, t) => {
-                            const c = state.clients.find(x => x.id === t.clientId);
-                            return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
-                        }, 0);
-                        mMargins = [margin]; 
-                        mCosts = [memberCost];
+                        const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
+                        if (closedMonth && closedMonth.memberMargins && closedMonth.memberMargins[member.id] !== undefined) {
+                            mMargins = [closedMonth.memberMargins[member.id]];
+                            mCosts = [memberCost];
+                        } else {
+                            const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                            const margin = moTrans.reduce((sum, t) => {
+                                const c = state.clients.find(x => x.id === t.clientId);
+                                return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
+                            }, 0);
+                            mMargins = [margin]; 
+                            mCosts = [memberCost];
+                        }
                     } else {
                         const isAll = state.filterMode === 'all';
                         const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
@@ -823,7 +844,9 @@
                 content.innerHTML = getProfileHTML();
             }
             
-            lucide.createIcons();
+            if(window.lucide) {
+                window.lucide.createIcons();
+            }
             setupCurrencyMasks();
             updateYearOptions();
         }
@@ -907,7 +930,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${m.id}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -991,7 +1014,7 @@
                         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Faturamento vs Custo</h3>
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Crescimento em ${contextYear}</h3>
                                     <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Apenas Meses Fechados</span>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1003,7 +1026,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${m.id}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1049,20 +1072,39 @@
                 `;
             } else {
                 // --- VISÃO MENSAL (ACOMPANHAMENTO MÊS ATUAL) ---
-                const activeC = state.clients.filter(c => c.status !== 'Churn');
-                const prevMRR = activeC.reduce((a, c) => a + Number(c.recurringValue || 0), 0);
-                const prevOT = activeC.reduce((a, c) => a + Number(c.oneTimeValue || 0), 0);
-                const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
                 
-                const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                const realMRR = moTrans.filter(t => t.type === 'recorrente').reduce((a, c) => a + c.value, 0);
-                const realOT = moTrans.filter(t => t.type === 'onetime').reduce((a, c) => a + c.value, 0);
-                const realMargin = moTrans.reduce((a, c) => a + c.marginValue, 0);
+                let realMRR = 0, realOT = 0, realMargin = 0, cFixo = 0, cVarFornecedores = 0, lucro = 0;
+                let prevMRR = 0, prevOT = 0;
+                let isLocked = false;
+                
+                if (closedMonth) {
+                    isLocked = true;
+                    realMRR = Number(closedMonth.mrrBrutoRealizado || 0); 
+                    realMargin = Number(closedMonth.margemTotalRealizada || 0);
+                    lucro = Number(closedMonth.lucroLiquido || 0);
+                    cFixo = Number(closedMonth.custosTotais || 0);
+                    cVarFornecedores = 0; 
+                    
+                    prevMRR = realMRR;
+                    prevOT = 0;
+                    realOT = 0; 
+                } else {
+                    const activeC = state.clients.filter(c => c.status !== 'Churn');
+                    prevMRR = activeC.reduce((a, c) => a + Number(c.recurringValue || 0), 0);
+                    prevOT = activeC.reduce((a, c) => a + Number(c.oneTimeValue || 0), 0);
+                    cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                    
+                    const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                    realMRR = moTrans.filter(t => t.type === 'recorrente').reduce((a, c) => a + c.value, 0);
+                    realOT = moTrans.filter(t => t.type === 'onetime').reduce((a, c) => a + c.value, 0);
+                    realMargin = moTrans.reduce((a, c) => a + c.marginValue, 0);
 
-                const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                const lucro = realMargin - (cFixo + cVarFornecedores);
+                    cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
+                    lucro = realMargin - (cFixo + cVarFornecedores);
+                }
 
-                const barRecPercent = prevMRR > 0 ? Math.min(100, Math.round((realMRR / prevMRR) * 100)) : 0;
+                const barRecPercent = prevMRR > 0 ? Math.min(100, Math.round((realMRR / prevMRR) * 100)) : (isLocked ? 100 : 0);
                 const barOTPercent = prevOT > 0 ? Math.min(100, Math.round((realOT / prevOT) * 100)) : 0;
 
                 return `
@@ -1084,7 +1126,7 @@
                             
                             <div class="p-6 rounded-2xl ${lucro >= 0 ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-950/10 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 to-red-950/10 border-red-500/50'} border shadow-lg relative overflow-hidden group">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="wallet" class="w-16 h-16 ${lucro>=0?'text-emerald-400':'text-red-400'}"></i></div>
-                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado de ${state.selectedMonth}</h3>
+                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado de ${state.selectedMonth} ${isLocked ? '(Fechado)' : ''}</h3>
                                 <div class="text-4xl font-black text-white">${formatCurrency(lucro)}</div>
                                 <p class="text-xs text-white/50 font-medium mt-2">${lucro >= 0 ? '👍 Caixa Positivo.' : '⚠️ Atenção: Prejuízo ou faltam baixas.'}</p>
                             </div>
@@ -1095,7 +1137,7 @@
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex items-center justify-between mb-6">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Análise de Faturamento vs Custo</h3>
-                                    <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Tempo Real</span>
+                                    <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">${isLocked ? 'Dados do Fechamento' : 'Tempo Real'}</span>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
                                     <canvas id="yearlyChart"></canvas>
@@ -1106,7 +1148,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${m.id}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1155,10 +1197,12 @@
                                         <div class="flex items-center gap-3"><div class="p-2 bg-red-900/30 text-red-400 rounded-lg"><i data-lucide="users" class="w-4 h-4"></i></div> <span class="font-medium text-gray-300">Custos Equipe</span></div>
                                         <span class="font-bold text-red-400">-${formatCurrency(cFixo)}</span>
                                     </div>
+                                    ${!isLocked ? `
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
                                         <div class="flex items-center gap-3"><div class="p-2 bg-orange-900/30 text-orange-400 rounded-lg"><i data-lucide="building" class="w-4 h-4"></i></div> <span class="font-medium text-gray-300">Custos de Fornecedores</span></div>
                                         <span class="font-bold text-red-400">-${formatCurrency(cVarFornecedores)}</span>
                                     </div>
+                                    ` : ''}
                                 </div>
                             </div>
                         </div>
@@ -2060,11 +2104,11 @@
             lockMonth: async () => {
                 if(!state.user) return;
                 
-                window.appActions.setLoading(true, 'btn-lock-month');
+                const btn = document.getElementById('btn-lock-month');
+                if(btn) window.appActions.setLoading(true, 'btn-lock-month');
 
                 const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                 let tRealRec=0, tMargin=0;
-                
                 const activeClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
                 
                 const memberMargins = {};
@@ -2104,8 +2148,12 @@
                 try {
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
                     window.showToast('Mês congelado no histórico com sucesso!');
-                } catch(e) { window.showToast('Erro ao congelar mês.', 'error'); console.error(e); }
-                finally { window.appActions.setLoading(false, 'btn-lock-month'); }
+                } catch(e) { 
+                    window.showToast('Erro ao congelar mês.', 'error'); 
+                    console.error(e); 
+                } finally { 
+                    if(btn) window.appActions.setLoading(false, 'btn-lock-month'); 
+                }
             },
             
             openHistoryModal: (month = null) => {
@@ -2159,7 +2207,7 @@
             
             saveHistory: async () => {
                 if(!state.user) return;
-                
+                const btn = document.getElementById('btn-save-history');
                 window.appActions.setLoading(true, 'btn-save-history');
 
                 const memberMargins = {};
@@ -2177,7 +2225,10 @@
                     memberMargins: memberMargins
                 };
                 
-                if(!data.month) { window.appActions.setLoading(false, 'btn-save-history'); return window.showToast('Selecione o mês!', 'error'); }
+                if(!data.month) { 
+                    window.appActions.setLoading(false, 'btn-save-history'); 
+                    return window.showToast('Selecione o mês!', 'error'); 
+                }
                 
                 data.lucroLiquido = data.margemTotalRealizada - data.custosTotais; 
                 data.locked = true;
@@ -2186,12 +2237,15 @@
                     await setDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'monthly_closures', data.month), { ...data, updatedAt: new Date().toISOString() }, { merge: true });
                     window.showToast('Histórico atualizado e computado!');
                     window.appActions.closeModal();
-                } catch(e) { window.showToast('Erro ao salvar no histórico.', 'error'); console.error(e); }
-                finally { window.appActions.setLoading(false, 'btn-save-history'); }
+                } catch(e) { 
+                    window.showToast('Erro ao salvar no histórico.', 'error'); 
+                    console.error(e); 
+                } finally { 
+                    window.appActions.setLoading(false, 'btn-save-history'); 
+                }
             }
         };
 
-        // System Core
         const mInput = document.getElementById('selected-month');
         if(mInput) {
             mInput.addEventListener('change', (e) => { 
