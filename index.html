@@ -41,17 +41,17 @@
 
     <script>
         // Sistema de Notificações Global e Proxy de Proteção
-        // Evita que cliques rápidos (antes do Firebase carregar) quebrem a aplicação
-        window.showToast = (msg, type = 'success') => {
+        window.showToast = function(msg, type) {
+            type = type || 'success';
             const toast = document.createElement('div');
             toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-xl font-bold text-white shadow-2xl z-[100] transition-all duration-500 transform translate-y-0 opacity-100 flex items-center gap-3 ${type === 'success' ? 'bg-emerald-600 border border-emerald-500/50' : 'bg-red-600 border border-red-500/50'}`;
             toast.innerHTML = `<span>${msg}</span>`;
             document.body.appendChild(toast);
-            if(window.lucide) window.lucide.createIcons({root: toast});
+            if(window.lucide) { window.lucide.createIcons({root: toast}); }
             
-            setTimeout(() => {
+            setTimeout(function() {
                 toast.classList.add('opacity-0', 'translate-y-4');
-                setTimeout(() => toast.remove(), 500);
+                setTimeout(function() { toast.remove(); }, 500);
             }, 3500);
         };
 
@@ -254,11 +254,11 @@
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Fornecedor</label>
+                        <div class="col-span-2 md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Fornecedor Principal</label>
                             <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Meta" />
                         </div>
-                        <div>
+                        <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Custo do Fornecedor</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
@@ -349,14 +349,46 @@
             </div>
         </div>
         
-        <!-- Modal Team -->
+        <!-- Modal Custo Operacional -->
+        <div id="modal-expense" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
+            <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center bg-[#111]">
+                <h2 id="expense-modal-title" class="text-xl font-bold text-white tracking-tight">Custo / Fornecedor</h2>
+                <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+            <div class="p-6 space-y-5">
+                <p class="text-xs text-gray-400 mb-4">Adicione ferramentas ou fornecedores para deduzir na linha final do seu caixa.</p>
+                <input type="hidden" id="expense-id" />
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Descrição / Fornecedor</label>
+                    <input type="text" id="expense-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Make, Asana..." />
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Alocado ao Projeto</label>
+                    <select id="expense-clientId" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Fixo Mensal (R$)</label>
+                    <div class="relative w-full">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
+                        <input type="text" id="expense-amount" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" />
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 border-t border-[#2a2a2a] bg-[#111] flex justify-end gap-3">
+                <button onclick="window.appActions.closeModal()" class="px-5 py-2.5 rounded-lg font-bold text-gray-400 hover:text-white transition-colors hover:bg-[#222]">Cancelar</button>
+                <button id="btn-save-expense" onclick="window.appActions.saveExpense()" class="bg-red-600 hover:bg-red-700 text-white px-8 py-2.5 rounded-lg font-bold shadow-lg shadow-red-900/30 transition-transform hover:-translate-y-0.5 flex items-center justify-center gap-2">Salvar Custo</button>
+            </div>
+        </div>
+
+        <!-- Modal Team Form -->
         <div id="modal-team" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center bg-[#111]">
                 <h2 id="team-modal-title" class="text-xl font-bold text-white tracking-tight">Equipe (Custos Fixos)</h2>
                 <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 space-y-5">
-                <p class="text-xs text-gray-400 mb-4">Adicione membros para deduzir seus custos fixos do lucro geral projetado no DFC.</p>
+                <p class="text-xs text-gray-400 mb-4">Adicione membros para deduzir seus custos do lucro geral projetado no DFC.</p>
                 <input type="hidden" id="team-id" />
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Nome do Integrante</label>
@@ -367,7 +399,7 @@
                     <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Fixo Mensal (R$)</label>
+                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Salário/Custo Fixo Mensal (R$)</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
                         <input type="text" id="team-cost" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" />
@@ -418,7 +450,6 @@
                 <div class="pt-4 border-t border-[#2a2a2a]">
                     <h3 class="text-[10px] font-bold text-gray-400 mb-3 uppercase tracking-wider">Faturamento por Integrante (Apenas Margem Limpa)</h3>
                     <div id="history-members-container" class="space-y-2 max-h-32 overflow-y-auto pr-2 scrollbar-hide">
-                        <!-- JS injects here -->
                     </div>
                 </div>
             </div>
@@ -439,7 +470,6 @@
                     <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] hover:bg-[#333] rounded-full transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
                 <div class="p-6 md:p-8" id="member-dash-content">
-                    <!-- Conteudo Dinamico -->
                 </div>
             </div>
         </div>
@@ -452,7 +482,7 @@
         import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-        const fallbackConfig = {
+        let firebaseConfig = {
             apiKey: "AIzaSyDML8GP1iSR92I-07L3cUhe9B3AwIuuQnM",
             authDomain: "squaddfc-a7f0e.firebaseapp.com",
             projectId: "squaddfc-a7f0e",
@@ -461,11 +491,10 @@
             appId: "1:952471267384:web:f253bc3a4e141a80b61ecd"
         };
         
-        let firebaseConfig = fallbackConfig;
         if (typeof __firebase_config !== 'undefined') {
             try { 
                 const parsed = JSON.parse(__firebase_config); 
-                if (parsed.apiKey) {
+                if (parsed && parsed.apiKey) {
                     firebaseConfig = parsed; 
                 }
             } catch(e) {
@@ -478,16 +507,16 @@
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e';
 
-        const getInitialMonth = () => {
+        function getInitialMonth() {
             const d = new Date(); 
             return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
-        };
+        }
 
         const state = {
             user: null, 
             activeTab: 'dashboard',
             filterMode: 'month',
-            clients: [], transactions: [], team: [], closures: [],
+            clients: [], transactions: [], team: [], closures: [], expenses: [],
             selectedMonth: getInitialMonth(),
             selectedYear: new Date().getFullYear().toString(),
             clientFilter: 'Todos', 
@@ -497,20 +526,20 @@
             selectedMemberId: null
         };
 
-        const formatCurrency = (val) => {
+        function formatCurrency(val) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
-        };
+        }
         
-        const formatNumberToBR = (val) => {
+        function formatNumberToBR(val) {
             return (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        };
+        }
         
-        const calcMargin = (val) => {
+        function calcMargin(val) {
             if (!val) return 0;
             return (val * 0.7075) * 0.35;
-        };
+        }
         
-        const escapeHTML = (str) => {
+        function escapeHTML(str) {
             if (!str) return '';
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -518,16 +547,21 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
-        };
+        }
 
-        const escapeJS = (str) => {
+        function escapeJS(str) {
             if (!str) return '';
-            return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
-        };
+            return String(str)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r');
+        }
 
-        const getMemberPct = (client, memberId) => {
+        function getMemberPct(client, memberId) {
             if (client.teamAllocations && Array.isArray(client.teamAllocations)) {
-                const alloc = client.teamAllocations.find(a => a.memberId === memberId);
+                const alloc = client.teamAllocations.find(function(a) { return a.memberId === memberId; });
                 if (alloc) {
                     return alloc.percentage / 100;
                 }
@@ -535,15 +569,15 @@
                 return (client.memberPercentage || 100) / 100;
             }
             return 0;
-        };
+        }
 
         function setupCurrencyMasks() {
-            document.querySelectorAll('.currency-mask').forEach(input => {
+            document.querySelectorAll('.currency-mask').forEach(function(input) {
                 const newInp = input.cloneNode(true);
                 if(input.parentNode) {
                     input.parentNode.replaceChild(newInp, input);
                 }
-                newInp.addEventListener('input', (e) => {
+                newInp.addEventListener('input', function(e) {
                     let val = e.target.value.replace(/\D/g, '');
                     if (val === '') { 
                         e.target.dataset.value = 0; 
@@ -556,15 +590,11 @@
                     
                     if(newInp.id === 'client-recurringValue') {
                         const target = document.getElementById('client-recurringMargin');
-                        if (target) {
-                            target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
-                        }
+                        if (target) { target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value))); }
                     }
                     if(newInp.id === 'client-oneTimeValue') {
                         const target = document.getElementById('client-oneTimeMargin');
-                        if (target) {
-                            target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value)));
-                        }
+                        if (target) { target.innerText = formatCurrency(calcMargin(Number(newInp.dataset.value))); }
                     }
                 });
             });
@@ -580,9 +610,7 @@
 
         function getCurrencyInput(id) {
             const el = document.getElementById(id);
-            if(el) {
-                return Number(el.dataset.value || 0);
-            }
+            if(el) { return Number(el.dataset.value || 0); }
             return 0;
         }
 
@@ -596,7 +624,7 @@
             ];
             const navMenu = document.getElementById('nav-menu');
             if (navMenu) {
-                navMenu.innerHTML = tabs.map(t => {
+                navMenu.innerHTML = tabs.map(function(t) {
                     const activeClass = state.activeTab === t.id ? 'bg-red-600 text-white font-bold shadow-lg shadow-red-900/40 translate-x-1' : 'text-gray-400 hover:bg-[#222] hover:text-white font-medium hover:translate-x-1';
                     return `
                     <button onclick="window.appActions.changeTab('${t.id}')" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${activeClass}">
@@ -607,7 +635,7 @@
             
             const headerTitle = document.getElementById('header-title');
             if (headerTitle) {
-                const activeTabObj = tabs.find(t => t.id === state.activeTab);
+                const activeTabObj = tabs.find(function(t) { return t.id === state.activeTab; });
                 headerTitle.innerText = activeTabObj ? activeTabObj.label : 'Meu Perfil';
             }
         }
@@ -617,12 +645,12 @@
             if(!select) return;
             const currentYear = new Date().getFullYear().toString();
             const years = new Set([currentYear, state.selectedMonth.split('-')[0]]);
-            state.closures.forEach(c => {
+            state.closures.forEach(function(c) {
                 if(c.month) years.add(c.month.split('-')[0]);
             });
             
-            const sortedYears = Array.from(years).sort((a, b) => b.localeCompare(a));
-            select.innerHTML = sortedYears.map(y => `<option value="${y}">Resumo do Ano (${y})</option>`).join('');
+            const sortedYears = Array.from(years).sort(function(a, b) { return b.localeCompare(a); });
+            select.innerHTML = sortedYears.map(function(y) { return `<option value="${y}">Resumo do Ano (${y})</option>`; }).join('');
             select.value = state.selectedYear;
         }
 
@@ -637,41 +665,41 @@
                 
                 if (state.filterMode === 'forecast') {
                     mainLabels = ['Projeção Atual'];
-                    const activeC = state.clients.filter(c => c.status !== 'Churn');
-                    const prevMarginRec = activeC.reduce((a, c) => a + calcMargin(Number(c.recurringValue||0)), 0);
-                    const prevMarginOT = activeC.reduce((a, c) => a + calcMargin(Number(c.oneTimeValue||0)), 0);
+                    const activeC = state.clients.filter(function(c) { return c.status !== 'Churn'; });
+                    const prevMarginRec = activeC.reduce(function(a, c) { return a + calcMargin(Number(c.recurringValue||0)); }, 0);
+                    const prevMarginOT = activeC.reduce(function(a, c) { return a + calcMargin(Number(c.oneTimeValue||0)); }, 0);
                     mainFaturamento = [prevMarginRec + prevMarginOT];
-                    const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                    const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                    const cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost || 0); }, 0);
+                    const cVarFornecedores = activeC.reduce(function(a, c) { return a + Number(c.supplierCost || 0); }, 0);
                     mainCustos = [cFixo + cVarFornecedores];
                 } else if (state.filterMode === 'month') {
                     mainLabels = [state.selectedMonth];
-                    const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
+                    const closedMonth = state.closures.find(function(c) { return c.month === state.selectedMonth; });
                     if (closedMonth) {
                         mainFaturamento = [Number(closedMonth.margemTotalRealizada || 0)];
                         mainCustos = [Number(closedMonth.custosTotais || 0)];
                     } else {
-                        const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                        mainFaturamento = [moTrans.reduce((a, c) => a + c.marginValue, 0)];
-                        const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                        const activeC = state.clients.filter(c => c.status !== 'Churn');
-                        const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                        const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
+                        mainFaturamento = [moTrans.reduce(function(a, c) { return a + c.marginValue; }, 0)];
+                        const cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost || 0); }, 0);
+                        const activeC = state.clients.filter(function(c) { return c.status !== 'Churn'; });
+                        const cVarFornecedores = activeC.reduce(function(a, c) { return a + Number(c.supplierCost || 0); }, 0);
                         mainCustos = [cFixo + cVarFornecedores];
                     }
                 } else {
                     const isAll = state.filterMode === 'all';
                     const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
-                    const yearClosures = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
-                    const sorted = yearClosures.sort((a,b) => a.month.localeCompare(b.month));
-                    mainLabels = sorted.map(c => { 
+                    const yearClosures = isAll ? state.closures : state.closures.filter(function(c) { return c.month && c.month.startsWith(state.selectedYear); });
+                    const sorted = yearClosures.sort(function(a,b) { return a.month.localeCompare(b.month); });
+                    mainLabels = sorted.map(function(c) { 
                         if(c.month) {
                             const p = c.month.split('-'); 
                             return p[1] + '/' + p[0].substring(2); 
                         }
                         return '';
                     });
-                    mainFaturamento = sorted.map(c => c.margemTotalRealizada);
-                    mainCustos = sorted.map(c => c.custosTotais);
+                    mainFaturamento = sorted.map(function(c) { return c.margemTotalRealizada; });
+                    mainCustos = sorted.map(function(c) { return c.custosTotais; });
                 }
 
                 if(state.chartInstance) {
@@ -693,7 +721,7 @@
                         }
                     });
                 } else {
-                    const mainColors = mainFaturamento.map((f, i) => f >= mainCustos[i] ? '#10b981' : '#ef4444');
+                    const mainColors = mainFaturamento.map(function(f, i) { return f >= mainCustos[i] ? '#10b981' : '#ef4444'; });
                     state.chartInstance = new Chart(ctx, {
                         type: 'bar',
                         data: { 
@@ -708,12 +736,12 @@
                             maintainAspectRatio: false, 
                             interaction: { mode: 'index', intersect: false }, 
                             scales: { 
-                                y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, 
+                                y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: function(val) { return 'R$ ' + (val/1000) + 'k'; } } }, 
                                 x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } 
                             }, 
                             plugins: { 
                                 legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, 
-                                tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } 
+                                tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: function(context) { return context.dataset.label + ': ' + formatCurrency(context.raw); } } } 
                             } 
                         }
                     });
@@ -732,7 +760,7 @@
                         options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { display: false } }, plugins: { legend: { labels: { color: '#666' } } } }
                     });
                 } else {
-                    const member = state.team.find(m => m.id === state.selectedMemberId);
+                    const member = state.team.find(function(m) { return m.id === state.selectedMemberId; });
                     const memberCost = member ? Number(member.cost || 0) : 0;
 
                     let mLabels = [];
@@ -741,21 +769,21 @@
 
                     if (state.filterMode === 'forecast') {
                         mLabels = ['Projeção'];
-                        const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => {
+                        const margin = state.clients.filter(function(c) { return c.status !== 'Churn'; }).reduce(function(sum, c) {
                             return sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id);
                         }, 0);
                         mMargins = [margin]; 
                         mCosts = [memberCost];
                     } else if (state.filterMode === 'month') {
                         mLabels = [state.selectedMonth];
-                        const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
+                        const closedMonth = state.closures.find(function(c) { return c.month === state.selectedMonth; });
                         if (closedMonth && closedMonth.memberMargins && closedMonth.memberMargins[member.id] !== undefined) {
                             mMargins = [closedMonth.memberMargins[member.id]];
                             mCosts = [memberCost];
                         } else {
-                            const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                            const margin = moTrans.reduce((sum, t) => {
-                                const c = state.clients.find(x => x.id === t.clientId);
+                            const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
+                            const margin = moTrans.reduce(function(sum, t) {
+                                const c = state.clients.find(function(x) { return x.id === t.clientId; });
                                 return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
                             }, 0);
                             mMargins = [margin]; 
@@ -763,10 +791,10 @@
                         }
                     } else {
                         const isAll = state.filterMode === 'all';
-                        const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
-                        const sortedC = [...closuresToUse].sort((a,b) => a.month.localeCompare(b.month));
+                        const closuresToUse = isAll ? state.closures : state.closures.filter(function(c) { return c.month && c.month.startsWith(state.selectedYear); });
+                        const sortedC = [...closuresToUse].sort(function(a,b) { return a.month.localeCompare(b.month); });
                         
-                        mLabels = sortedC.map(c => { 
+                        mLabels = sortedC.map(function(c) { 
                             if(c.month) {
                                 const p = c.month.split('-'); 
                                 return p[1] + '/' + p[0].substring(2);
@@ -774,20 +802,20 @@
                             return '';
                         });
                         
-                        mMargins = sortedC.map(closure => {
+                        mMargins = sortedC.map(function(closure) {
                             if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) {
                                 return closure.memberMargins[member.id];
                             }
-                            const moTrans = state.transactions.filter(t => t.month === closure.month);
-                            return moTrans.reduce((sum, t) => {
-                                const c = state.clients.find(x => x.id === t.clientId);
+                            const moTrans = state.transactions.filter(function(t) { return t.month === closure.month; });
+                            return moTrans.reduce(function(sum, t) {
+                                const c = state.clients.find(function(x) { return x.id === t.clientId; });
                                 return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
                             }, 0);
                         });
-                        mCosts = sortedC.map(() => memberCost); 
+                        mCosts = sortedC.map(function() { return memberCost; }); 
                     }
 
-                    const memberColors = mMargins.map((m, i) => m >= mCosts[i] ? '#10b981' : '#ef4444');
+                    const memberColors = mMargins.map(function(m, i) { return m >= mCosts[i] ? '#10b981' : '#ef4444'; });
 
                     state.memberChartInstance = new Chart(mCtx, {
                         type: 'bar',
@@ -803,12 +831,12 @@
                             maintainAspectRatio: false, 
                             interaction: { mode: 'index', intersect: false }, 
                             scales: { 
-                                y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: (val) => 'R$ ' + (val/1000) + 'k' } }, 
+                                y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: function(val) { return 'R$ ' + (val/1000) + 'k'; } } }, 
                                 x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } 
                             }, 
                             plugins: { 
                                 legend: { position: 'top', labels: { color: '#e5e7eb', boxWidth: 12, font: {family: 'inherit', size: 11} } }, 
-                                tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw) } } 
+                                tooltip: { backgroundColor: '#111', titleColor: '#fff', bodyColor: '#ccc', borderColor: '#333', borderWidth: 1, padding: 12, cornerRadius: 8, callbacks: { label: function(context) { return context.dataset.label + ': ' + formatCurrency(context.raw); } } } 
                             } 
                         }
                     });
@@ -854,11 +882,11 @@
         function getDashboardHTML() {
             const mode = state.filterMode;
 
-            if (state.team.length > 0 && (!state.selectedMemberId || !state.team.find(m => m.id === state.selectedMemberId))) {
+            if (state.team.length > 0 && (!state.selectedMemberId || !state.team.find(function(m) { return m.id === state.selectedMemberId; }))) {
                 let bestId = state.team[0].id;
                 let maxProfit = -Infinity;
-                state.team.forEach(m => {
-                    const margin = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => {
+                state.team.forEach(function(m) {
+                    const margin = state.clients.filter(function(c) { return c.status !== 'Churn'; }).reduce(function(sum, c) {
                         return sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, m.id);
                     }, 0);
                     const profit = margin - Number(m.cost || 0);
@@ -871,17 +899,17 @@
             }
 
             if (mode === 'forecast') {
-                const activeC = state.clients.filter(c => c.status !== 'Churn');
-                const prevMRR = activeC.reduce((a, c) => a + Number(c.recurringValue || 0), 0);
-                const prevOT = activeC.reduce((a, c) => a + Number(c.oneTimeValue || 0), 0);
+                const activeC = state.clients.filter(function(c) { return c.status !== 'Churn'; });
+                const prevMRR = activeC.reduce(function(a, c) { return a + Number(c.recurringValue || 0); }, 0);
+                const prevOT = activeC.reduce(function(a, c) { return a + Number(c.oneTimeValue || 0); }, 0);
                 const totalFaturamentoPrevisto = prevMRR + prevOT;
 
-                const prevMarginRec = activeC.reduce((a, c) => a + calcMargin(Number(c.recurringValue||0)), 0);
-                const prevMarginOT = activeC.reduce((a, c) => a + calcMargin(Number(c.oneTimeValue||0)), 0);
+                const prevMarginRec = activeC.reduce(function(a, c) { return a + calcMargin(Number(c.recurringValue||0)); }, 0);
+                const prevMarginOT = activeC.reduce(function(a, c) { return a + calcMargin(Number(c.oneTimeValue||0)); }, 0);
                 const totalMargemPrevista = prevMarginRec + prevMarginOT;
 
-                const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                const cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                const cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost || 0); }, 0);
+                const cVarFornecedores = activeC.reduce(function(a, c) { return a + Number(c.supplierCost || 0); }, 0);
                 const lucroPrevisto = totalMargemPrevista - (cFixo + cVarFornecedores);
 
                 return `
@@ -930,7 +958,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -977,12 +1005,12 @@
             } else if (mode === 'year' || mode === 'all') {
                 const isAll = mode === 'all';
                 const contextYear = isAll ? 'Todo o Período' : state.selectedYear;
-                const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
+                const closuresToUse = isAll ? state.closures : state.closures.filter(function(c) { return c.month && c.month.startsWith(state.selectedYear); });
                 
-                const realMRR = closuresToUse.reduce((a, c) => a + Number(c.mrrBrutoRealizado||0), 0);
-                const realMargin = closuresToUse.reduce((a, c) => a + Number(c.margemTotalRealizada||0), 0);
-                const lucro = closuresToUse.reduce((a, c) => a + Number(c.lucroLiquido||0), 0);
-                const cFixo = closuresToUse.reduce((a, c) => a + Number(c.custosTotais||0), 0); 
+                const realMRR = closuresToUse.reduce(function(a, c) { return a + Number(c.mrrBrutoRealizado||0); }, 0);
+                const realMargin = closuresToUse.reduce(function(a, c) { return a + Number(c.margemTotalRealizada||0); }, 0);
+                const lucro = closuresToUse.reduce(function(a, c) { return a + Number(c.lucroLiquido||0); }, 0);
+                const cFixo = closuresToUse.reduce(function(a, c) { return a + Number(c.custosTotais||0); }, 0); 
                 const monthsClosed = closuresToUse.length;
                 const avgProfit = monthsClosed > 0 ? lucro / monthsClosed : 0;
 
@@ -1026,7 +1054,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1072,7 +1100,7 @@
                 `;
             } else {
                 // --- VISÃO MENSAL (ACOMPANHAMENTO MÊS ATUAL) ---
-                const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
+                const closedMonth = state.closures.find(function(c) { return c.month === state.selectedMonth; });
                 
                 let realMRR = 0, realOT = 0, realMargin = 0, cFixo = 0, cVarFornecedores = 0, lucro = 0;
                 let prevMRR = 0, prevOT = 0;
@@ -1090,17 +1118,17 @@
                     prevOT = 0;
                     realOT = 0; 
                 } else {
-                    const activeC = state.clients.filter(c => c.status !== 'Churn');
-                    prevMRR = activeC.reduce((a, c) => a + Number(c.recurringValue || 0), 0);
-                    prevOT = activeC.reduce((a, c) => a + Number(c.oneTimeValue || 0), 0);
-                    cVarFornecedores = activeC.reduce((a, c) => a + Number(c.supplierCost || 0), 0);
+                    const activeC = state.clients.filter(function(c) { return c.status !== 'Churn'; });
+                    prevMRR = activeC.reduce(function(a, c) { return a + Number(c.recurringValue || 0); }, 0);
+                    prevOT = activeC.reduce(function(a, c) { return a + Number(c.oneTimeValue || 0); }, 0);
                     
-                    const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                    realMRR = moTrans.filter(t => t.type === 'recorrente').reduce((a, c) => a + c.value, 0);
-                    realOT = moTrans.filter(t => t.type === 'onetime').reduce((a, c) => a + c.value, 0);
-                    realMargin = moTrans.reduce((a, c) => a + c.marginValue, 0);
+                    const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
+                    realMRR = moTrans.filter(function(t) { return t.type === 'recorrente'; }).reduce(function(a, c) { return a + c.value; }, 0);
+                    realOT = moTrans.filter(function(t) { return t.type === 'onetime'; }).reduce(function(a, c) { return a + c.value; }, 0);
+                    realMargin = moTrans.reduce(function(a, c) { return a + c.marginValue; }, 0);
 
-                    cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
+                    cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost || 0); }, 0);
+                    cVarFornecedores = state.expenses.reduce(function(a, e) { return a + Number(e.amount || 0); }, 0);
                     lucro = realMargin - (cFixo + cVarFornecedores);
                 }
 
@@ -1148,7 +1176,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select id="member-chart-selector" onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(m => `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1212,15 +1240,15 @@
         }
 
         function getClientsHTML() {
-            const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-            const list = state.clients.filter(c => state.clientFilter === 'Todos' || c.phase === state.clientFilter);
+            const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
+            const list = state.clients.filter(function(c) { return state.clientFilter === 'Todos' || c.phase === state.clientFilter; });
             
             let html = `
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
-                        ${['Todos', 'Manutenção', 'Implementação', 'Tratativa'].map(p => `
-                            <button onclick="window.appActions.setClientFilter('${p}')" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transform scale-105' : 'bg-[#111] text-gray-400 border border-[#333] hover:border-gray-500 hover:text-white'}">${p}</button>
-                        `).join('')}
+                        ${['Todos', 'Manutenção', 'Implementação', 'Tratativa'].map(function(p) {
+                            return `<button onclick="window.appActions.setClientFilter('${p}')" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transform scale-105' : 'bg-[#111] text-gray-400 border border-[#333] hover:border-gray-500 hover:text-white'}">${escapeHTML(p)}</button>`;
+                        }).join('')}
                     </div>
                     <button onclick="window.appActions.openClientModal()" class="bg-white text-black px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-transform hover:-translate-y-0.5 shadow-lg w-full md:w-auto"><i data-lucide="plus" class="w-4 h-4"></i> Cadastrar Projeto</button>
                 </div>
@@ -1231,22 +1259,22 @@
                 html += `<div class="col-span-full py-20 text-center text-gray-500 border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="ghost" class="w-10 h-10 mx-auto mb-4 opacity-50"></i>Nenhum cliente encontrado neste filtro.</div>`;
             }
 
-            html += list.map(client => {
-                const cTrans = moTrans.filter(t => t.clientId === client.id);
-                const recTrans = cTrans.find(t => t.type === 'recorrente');
-                const otTrans = cTrans.find(t => t.type === 'onetime');
+            html += list.map(function(client) {
+                const cTrans = moTrans.filter(function(t) { return t.clientId === client.id; });
+                const recTrans = cTrans.find(function(t) { return t.type === 'recorrente'; });
+                const otTrans = cTrans.find(function(t) { return t.type === 'onetime'; });
                 const isChurn = client.status === 'Churn';
                 const recValueToSave = Number(client.recurringValue) || 0;
                 const otValueToSave = Number(client.oneTimeValue) || 0;
                 
                 let teamBadges = '';
                 if (client.teamAllocations && client.teamAllocations.length > 0) {
-                    teamBadges = client.teamAllocations.map(alloc => {
-                        const m = state.team.find(x => x.id === alloc.memberId);
+                    teamBadges = client.teamAllocations.map(function(alloc) {
+                        const m = state.team.find(function(x) { return x.id === alloc.memberId; });
                         return m ? `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${escapeHTML(m.name.split(' ')[0])} (${alloc.percentage}%)</span>` : '';
                     }).join('');
                 } else if (client.assignedMemberId) { 
-                    const m = state.team.find(x => x.id === client.assignedMemberId);
+                    const m = state.team.find(function(x) { return x.id === client.assignedMemberId; });
                     if (m) teamBadges = `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${escapeHTML(m.name.split(' ')[0])} (${client.memberPercentage||100}%)</span>`;
                 }
 
@@ -1320,20 +1348,22 @@
                     </div>
                     <button onclick="window.appActions.openTeamModal()" class="bg-white text-black px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-transform hover:-translate-y-0.5 shadow-lg w-full md:w-auto"><i data-lucide="user-plus" class="w-4 h-4"></i> Cadastrar Integrante</button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-12">
             `;
             if(state.team.length === 0) {
                 html += `<div class="col-span-full py-20 text-center border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="users" class="w-12 h-12 mx-auto text-gray-600 mb-4 opacity-50"></i><p class="text-gray-400 font-medium">Nenhum membro na equipe ainda.</p></div>`;
             } else {
-                html += state.team.map(member => {
-                    const memberClients = state.clients.filter(c => c.status !== 'Churn');
-                    const mrrMcGerado = memberClients.reduce((acc, c) => {
+                html += state.team.map(function(member) {
+                    const memberClients = state.clients.filter(function(c) { return c.status !== 'Churn'; });
+                    const mrrMcGerado = memberClients.reduce(function(acc, c) {
                         let pct = getMemberPct(c, member.id);
                         return acc + (calcMargin(Number(c.recurringValue||0)) * pct);
                     }, 0);
 
-                    const activeProjects = memberClients.filter(c => {
-                        if (c.teamAllocations) return c.teamAllocations.some(a => a.memberId === member.id);
+                    const activeProjects = memberClients.filter(function(c) {
+                        if (c.teamAllocations) {
+                            return c.teamAllocations.some(function(a) { return a.memberId === member.id; });
+                        }
                         return c.assignedMemberId === member.id;
                     });
 
@@ -1347,7 +1377,7 @@
                             <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${escapeJS(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${escapeHTML(member.name).charAt(0).toUpperCase()}</div>
+                            <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${(escapeHTML(member.name).charAt(0) || 'U').toUpperCase()}</div>
                             <div>
                                 <h3 class="font-black text-xl text-white tracking-tight">${escapeHTML(member.name)}</h3>
                                 <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${escapeHTML(member.role) || 'Membro da Equipe'}</p>
@@ -1364,10 +1394,14 @@
                                 <span class="text-gray-600 group-hover:text-red-400 transition-colors flex items-center gap-1"><i data-lucide="mouse-pointer-click" class="w-3 h-3"></i> Detalhes</span>
                             </p>
                             <div class="flex flex-wrap gap-2">
-                                ${activeProjects.map(c => {
+                                ${activeProjects.map(function(c) {
                                     let p = 100;
-                                    if(c.teamAllocations) p = c.teamAllocations.find(a => a.memberId === member.id)?.percentage || 100;
-                                    else p = c.memberPercentage || 100;
+                                    if(c.teamAllocations) {
+                                        const alloc = c.teamAllocations.find(function(a) { return a.memberId === member.id; });
+                                        if(alloc) p = alloc.percentage;
+                                    } else {
+                                        p = c.memberPercentage || 100;
+                                    }
                                     return `<span class="text-[10px] font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-1 rounded flex items-center gap-1">${escapeHTML(c.name)} <span class="text-red-500">${p}%</span></span>`;
                                 }).join('')}
                                 ${activeProjects.length===0 ? '<span class="text-[10px] text-gray-600 font-medium italic">Nenhum projeto associado.</span>':''}
@@ -1376,12 +1410,46 @@
                     </div>`;
                 }).join('');
             }
-            return html + '</div>';
+            html += `</div>`;
+
+            // SEÇÃO DE CUSTOS E FORNECEDORES GERAIS
+            html += `
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mt-12 mb-8 gap-4 border-t border-[#222] pt-10">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight">Custos & Fornecedores</h2>
+                        <p class="text-sm text-gray-500 mt-1">Gerencie custos operacionais e aloque-os a projetos específicos.</p>
+                    </div>
+                    <button onclick="window.appActions.openExpenseModal()" class="bg-[#1a1a1a] border border-[#333] text-white px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#222] transition-transform hover:-translate-y-0.5 shadow-lg w-full md:w-auto"><i data-lucide="plus" class="w-4 h-4"></i> Adicionar Custo</button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            `;
+            
+            if(state.expenses && state.expenses.length === 0) {
+                html += `<div class="col-span-full py-10 text-center border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="receipt" class="w-10 h-10 mx-auto text-gray-600 mb-3 opacity-50"></i><p class="text-gray-400 font-medium">Nenhum custo cadastrado.</p></div>`;
+            } else if(state.expenses) {
+                html += state.expenses.map(function(exp) {
+                    const client = state.clients.find(function(c) { return c.id === exp.clientId; });
+                    return `
+                        <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 shadow-lg flex flex-col justify-between">
+                            <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                                <button onclick="window.appActions.openExpenseModal('${escapeJS(exp.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333]"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                <button onclick="window.appActions.deleteExpense('${escapeJS(exp.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            </div>
+                            <h3 class="font-bold text-lg text-white mb-1 pr-16">${escapeHTML(exp.name)}</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-wider ${client ? 'text-blue-400 bg-blue-900/20 border-blue-900/50' : 'text-gray-400 bg-[#222] border-[#333]'} px-2.5 py-1 rounded inline-block mb-4 border w-max">${client ? '<i data-lucide="folder" class="w-3 h-3 inline mr-1"></i> Projeto: ' + escapeHTML(client.name) : '<i data-lucide="globe" class="w-3 h-3 inline mr-1"></i> Custo Geral Operacional'}</p>
+                            <div class="text-2xl font-black text-red-400 mt-2">-${formatCurrency(exp.amount)} <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">/mês</span></div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            html += `</div>`;
+
+            return html;
         }
 
         function getClosureHTML() {
-            const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-            const isLocked = state.closures.some(c => c.month === state.selectedMonth && c.locked);
+            const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
+            const isLocked = state.closures.some(function(c) { return c.month === state.selectedMonth && c.locked; });
             
             let html = `
                 <div class="bg-[#111] border border-[#222] rounded-2xl overflow-hidden shadow-2xl animate-fade-in">
@@ -1404,17 +1472,17 @@
                             <tbody class="divide-y divide-[#222]">
             `;
 
-            const validClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
+            const validClients = state.clients.filter(function(c) { return c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(function(t) { return t.clientId === c.id; })); });
             if(validClients.length === 0) {
                 html += `<tr><td colspan="5" class="p-10 text-center text-gray-500 italic">Não há projetos ativos na base para este mês.</td></tr>`;
             }
 
             let somaPrevRec=0, somaPrevOt=0, somaRealRec=0, somaRealOt=0, somaMargem=0;
 
-            validClients.forEach(client => {
-                const cTrans = moTrans.filter(t => t.clientId === client.id);
-                const recT = cTrans.find(t => t.type === 'recorrente');
-                const otT = cTrans.find(t => t.type === 'onetime');
+            validClients.forEach(function(client) {
+                const cTrans = moTrans.filter(function(t) { return t.clientId === client.id; });
+                const recT = cTrans.find(function(t) { return t.type === 'recorrente'; });
+                const otT = cTrans.find(function(t) { return t.type === 'onetime'; });
                 const pR = Number(client.recurringValue||0);
                 const pO = Number(client.oneTimeValue||0);
                 const rR = recT?recT.value:0;
@@ -1488,7 +1556,8 @@
             if(state.closures.length === 0) {
                 html += `<div class="col-span-full py-20 text-center border border-dashed border-[#333] rounded-2xl bg-[#111]"><i data-lucide="history" class="w-12 h-12 mx-auto text-gray-600 mb-4 opacity-50"></i><p class="text-gray-300 font-bold text-lg">Banco de Histórico Vazio</p><p class="text-sm text-gray-500 mt-2">Nenhum mês foi travado na aba "Fechamento".</p></div>`;
             } else {
-                html += state.closures.map(c => `
+                html += state.closures.map(function(c) {
+                    return `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/10 flex flex-col">
                         <button onclick="window.appActions.openHistoryModal('${escapeJS(c.month)}')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                         
@@ -1511,7 +1580,7 @@
                             <span class="font-black text-2xl ${c.lucroLiquido>=0?'text-emerald-500':'text-red-500'} tracking-tight">${formatCurrency(c.lucroLiquido)}</span>
                         </div>
                     </div>
-                `).join('');
+                `;}).join('');
             }
             return html + '</div></div>';
         }
@@ -1576,9 +1645,8 @@
             `;
         }
 
-        // --- CONTROLE DE AÇÕES ---
-        window.appActions = {
-            changeTab: (tab) => { 
+        Object.assign(window.appActions, {
+            changeTab: function(tab) { 
                 state.activeTab = tab; 
                 if(window.innerWidth < 768) {
                     const sidebar = document.getElementById('sidebar');
@@ -1589,13 +1657,13 @@
                 renderNav();
                 renderContent();
             },
-            toggleMobileMenu: () => { 
+            toggleMobileMenu: function() { 
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.getElementById('sidebar-overlay');
                 if (sidebar) sidebar.classList.toggle('-translate-x-full'); 
                 if (overlay) overlay.classList.toggle('hidden'); 
             },
-            setFilterMode: (mode) => {
+            setFilterMode: function(mode) {
                 state.filterMode = mode;
                 const btnM = document.getElementById('filter-btn-month');
                 const btnY = document.getElementById('filter-btn-year');
@@ -1625,11 +1693,11 @@
                 }
                 renderContent();
             },
-            setMemberChart: (id) => {
+            setMemberChart: function(id) {
                 state.selectedMemberId = id;
                 renderChart();
             },
-            toggleAuthMode: () => { 
+            toggleAuthMode: function() { 
                 state.isSignUpMode = !state.isSignUpMode; 
                 const nameField = document.getElementById('name-field');
                 const btnAction = document.getElementById('btn-action');
@@ -1643,7 +1711,7 @@
                 if(toggleBtn) toggleBtn.innerText = state.isSignUpMode ? 'Fazer login' : 'Criar conta grátis'; 
                 if(errorEl) errorEl.classList.add('hidden'); 
             },
-            setLoading: (isLoading, btnId, originalHtml) => {
+            setLoading: function(isLoading, btnId, originalHtml) {
                 const btn = document.getElementById(btnId);
                 if (!btn) return;
                 if (isLoading) {
@@ -1655,7 +1723,7 @@
                     if (btn.dataset.originalHtml) btn.innerHTML = btn.dataset.originalHtml;
                 }
             },
-            handleEmailAuth: async () => {
+            handleEmailAuth: async function() {
                 const email = document.getElementById('login-email').value;
                 const password = document.getElementById('login-password').value;
                 const name = document.getElementById('login-name').value;
@@ -1683,7 +1751,7 @@
                     window.appActions.setLoading(false, 'btn-action'); 
                 }
             },
-            loginWithGoogle: async () => {
+            loginWithGoogle: async function() {
                 const errorEl = document.getElementById('login-error');
                 if(errorEl) errorEl.classList.add('hidden');
                 window.appActions.setLoading(true, 'btn-google');
@@ -1704,19 +1772,19 @@
                     window.appActions.setLoading(false, 'btn-google'); 
                 }
             },
-            loginAnonymously: async () => { 
+            loginAnonymously: async function() { 
                 window.appActions.setLoading(true, 'btn-guest'); 
                 try { 
                     await signInAnonymously(auth); 
                 } catch(e) { 
-                    alert(e.message); 
+                    window.showToast(e.message, 'error'); 
                     window.appActions.setLoading(false, 'btn-guest');
                 } 
             },
-            logout: () => {
+            logout: function() {
                 signOut(auth);
             },
-            saveProfile: async () => {
+            saveProfile: async function() {
                 if(!state.user) return;
                 const newName = document.getElementById('profile-name').value;
                 const newPass = document.getElementById('profile-password').value;
@@ -1739,12 +1807,12 @@
                     window.appActions.setLoading(false, 'btn-save-profile'); 
                 }
             },
-            updateProfilePhoto: async (input) => {
+            updateProfilePhoto: async function(input) {
                 if(!state.user || !input.files || input.files.length === 0) return;
                 const file = input.files[0];
                 if(file.size > 1024 * 1024) { window.showToast("Use imagens menores que 1MB.", "error"); return; }
                 const reader = new FileReader();
-                reader.onloadend = async () => {
+                reader.onloadend = async function() {
                     try { 
                         await updateProfile(auth.currentUser, { photoURL: reader.result }); 
                         state.user = auth.currentUser; 
@@ -1757,7 +1825,77 @@
                 }; 
                 reader.readAsDataURL(file);
             },
-            addTeamAllocationRow: (memberId = '', pct = 100) => {
+            openExpenseModal: function(id = null) {
+                const m = document.getElementById('modal-expense');
+                const selClient = document.getElementById('expense-clientId');
+                
+                if (selClient) {
+                    selClient.innerHTML = '<option value="">Custo Geral (Sem projeto)</option>' + 
+                        state.clients.map(function(c) { return `<option value="${escapeHTML(c.id)}">${escapeHTML(c.name)}</option>`; }).join('');
+                }
+
+                if(id && id !== 'undefined' && id !== 'null') {
+                    const e = state.expenses.find(function(x) { return x.id === id; });
+                    if(!e) return;
+                    document.getElementById('expense-modal-title').innerText = 'Editar Custo';
+                    document.getElementById('expense-id').value = e.id;
+                    document.getElementById('expense-name').value = e.name || '';
+                    if(selClient) selClient.value = e.clientId || '';
+                    setCurrencyInput('expense-amount', e.amount);
+                } else {
+                    document.getElementById('expense-modal-title').innerText = 'Novo Custo';
+                    document.getElementById('expense-id').value = '';
+                    document.getElementById('expense-name').value = '';
+                    if(selClient) selClient.value = '';
+                    setCurrencyInput('expense-amount', 0);
+                }
+                
+                const backdrop = document.getElementById('modal-backdrop');
+                if(backdrop) backdrop.classList.remove('hidden'); 
+                if(m) {
+                    m.classList.remove('hidden'); 
+                    m.classList.add('flex');
+                }
+            },
+            saveExpense: async function() {
+                if(!state.user) return;
+                const eid = document.getElementById('expense-id').value;
+                const btn = document.getElementById('btn-save-expense');
+                
+                const data = {
+                    name: document.getElementById('expense-name').value,
+                    clientId: document.getElementById('expense-clientId').value,
+                    amount: getCurrencyInput('expense-amount')
+                };
+
+                try {
+                    if(!data.name) return window.showToast('A descrição é obrigatória!', 'error');
+                    window.appActions.setLoading(true, 'btn-save-expense');
+                    
+                    if (eid) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'expenses', eid), data);
+                    } else {
+                        await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'expenses'), { ...data, createdAt: new Date().toISOString() });
+                    }
+                    window.showToast('Custo salvo com sucesso!');
+                    window.appActions.closeModal();
+                } catch(e) { 
+                    window.showToast('Erro ao salvar custo.', 'error'); 
+                    console.error(e); 
+                } finally { 
+                    window.appActions.setLoading(false, 'btn-save-expense'); 
+                }
+            },
+            deleteExpense: async function(id) { 
+                if(!state.user) return; 
+                if(confirm('Excluir este custo?')) { 
+                    try { 
+                        await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'expenses', id)); 
+                        window.showToast('Custo removido.');
+                    } catch(e) { window.showToast('Erro ao remover.', 'error'); console.error(e); } 
+                } 
+            },
+            addTeamAllocationRow: function(memberId = '', pct = 100) {
                 const container = document.getElementById('team-allocations-container');
                 if(!container) return;
                 const row = document.createElement('div');
@@ -1766,7 +1904,7 @@
                     <div class="flex-1">
                         <select class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-2.5 text-sm text-white focus:border-red-500 outline-none alloc-member">
                             <option value="">Selecione Integrante...</option>
-                            ${state.team.map(m => `<option value="${m.id}" ${m.id === memberId ? 'selected' : ''}>${escapeHTML(m.name)}</option>`).join('')}
+                            ${state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${m.id === memberId ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
                         </select>
                     </div>
                     <div class="w-24 relative">
@@ -1776,19 +1914,19 @@
                     <button type="button" onclick="this.parentElement.remove()" class="bg-[#222] hover:bg-red-900/50 text-gray-400 hover:text-red-400 p-2.5 rounded-lg transition-colors border border-transparent hover:border-red-900/50 flex-shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                 `;
                 container.appendChild(row);
-                lucide.createIcons({root: row});
+                if(window.lucide) window.lucide.createIcons({root: row});
             },
-            setClientFilter: (filter) => { 
+            setClientFilter: function(filter) { 
                 state.clientFilter = filter; 
                 renderContent(); 
             },
-            openClientModal: (id = null) => {
+            openClientModal: function(id = null) {
                 const m = document.getElementById('modal-client');
                 const allocContainer = document.getElementById('team-allocations-container');
                 if (allocContainer) allocContainer.innerHTML = '';
 
-                if(id) {
-                    const c = state.clients.find(x => x.id === id);
+                if(id && id !== 'undefined' && id !== 'null') {
+                    const c = state.clients.find(function(x) { return x.id === id; });
                     if(!c) return;
                     document.getElementById('client-modal-title').innerText = 'Editar Projeto & Cliente';
                     document.getElementById('client-id').value = c.id;
@@ -1815,7 +1953,7 @@
                     document.getElementById('client-observation').value = c.observation || '';
 
                     if (c.teamAllocations && c.teamAllocations.length > 0) {
-                        c.teamAllocations.forEach(alloc => window.appActions.addTeamAllocationRow(alloc.memberId, alloc.percentage));
+                        c.teamAllocations.forEach(function(alloc) { window.appActions.addTeamAllocationRow(alloc.memberId, alloc.percentage); });
                     } else if (c.assignedMemberId) {
                         window.appActions.addTeamAllocationRow(c.assignedMemberId, c.memberPercentage || 100);
                     } else {
@@ -1856,25 +1994,25 @@
                     m.classList.add('flex');
                 }
             },
-            closeModal: () => { 
+            closeModal: function() { 
                 const backdrop = document.getElementById('modal-backdrop');
                 if (backdrop) backdrop.classList.add('hidden'); 
-                ['modal-client', 'modal-team', 'modal-history', 'modal-member-dashboard'].forEach(id => {
+                ['modal-client', 'modal-team', 'modal-history', 'modal-member-dashboard', 'modal-expense'].forEach(function(id) {
                     const el = document.getElementById(id);
                     if(el) { el.classList.add('hidden'); el.classList.remove('flex'); }
                 }); 
             },
-            saveClient: async () => {
+            saveClient: async function() {
                 if(!state.user) return;
                 const cid = document.getElementById('client-id').value;
                 const btn = document.getElementById('btn-save-client');
                 
-                const teamAllocations = Array.from(document.querySelectorAll('.team-allocation-row')).map(row => {
+                const teamAllocations = Array.from(document.querySelectorAll('.team-allocation-row')).map(function(row) {
                     return {
                         memberId: row.querySelector('.alloc-member').value,
                         percentage: Number(row.querySelector('.alloc-pct').value) || 0
                     };
-                }).filter(a => a.memberId !== '');
+                }).filter(function(a) { return a.memberId !== ''; });
 
                 const data = {
                     name: document.getElementById('client-name').value, 
@@ -1910,28 +2048,28 @@
                     window.appActions.setLoading(false, 'btn-save-client'); 
                 }
             },
-            darBaixa: async (clientId, value, type) => {
+            darBaixa: async function(clientId, value, type) {
                 if(!state.user) return;
-                const client = state.clients.find(c => c.id === clientId);
+                const client = state.clients.find(function(c) { return c.id === clientId; });
                 if (!client) return;
                 try { 
                     await addDoc(collection(db, 'artifacts', appId, 'users', state.user.uid, 'transactions'), { 
-                        clientId, clientName: client.name, month: state.selectedMonth, value: Number(value), marginValue: calcMargin(Number(value)), type, createdAt: new Date().toISOString() 
+                        clientId: clientId, clientName: client.name, month: state.selectedMonth, value: Number(value), marginValue: calcMargin(Number(value)), type: type, createdAt: new Date().toISOString() 
                     });
                     window.showToast(`Baixa de ${formatCurrency(value)} registrada.`);
                 } catch(e) { window.showToast('Erro ao registrar baixa.', 'error'); console.error(e); }
             },
-            removeBaixa: async (tid) => { 
+            removeBaixa: async function(tid) { 
                 if(!state.user) return; 
                 try { 
                     await deleteDoc(doc(db, 'artifacts', appId, 'users', state.user.uid, 'transactions', tid)); 
                     window.showToast('Baixa desfeita com sucesso.');
                 } catch(e) { window.showToast('Erro ao desfazer.', 'error'); console.error(e); } 
             },
-            openTeamModal: (id = null) => {
+            openTeamModal: function(id = null) {
                 const m = document.getElementById('modal-team');
-                if(id) {
-                    const member = state.team.find(m => m.id === id);
+                if(id && id !== 'undefined' && id !== 'null') {
+                    const member = state.team.find(function(m) { return m.id === id; });
                     if(!member) return;
                     document.getElementById('team-modal-title').innerText = 'Editar Integrante'; 
                     document.getElementById('team-id').value = member.id;
@@ -1952,10 +2090,9 @@
                     m.classList.add('flex');
                 }
             },
-            saveTeam: async () => {
+            saveTeam: async function() {
                 if(!state.user) return;
                 const mid = document.getElementById('team-id').value;
-                const btn = document.getElementById('btn-save-team');
                 const data = { 
                     name: document.getElementById('team-name').value, 
                     role: document.getElementById('team-role').value, 
@@ -1975,7 +2112,7 @@
                 } catch(e) { window.showToast('Erro ao salvar.', 'error'); console.error(e); }
                 finally { window.appActions.setLoading(false, 'btn-save-team'); }
             },
-            deleteTeam: async (id) => { 
+            deleteTeam: async function(id) { 
                 if(!state.user) return; 
                 if(confirm('Excluir este membro e seus custos do DFC?')) { 
                     try { 
@@ -1984,8 +2121,8 @@
                     } catch(e) { window.showToast('Erro ao remover.', 'error'); console.error(e); } 
                 } 
             },
-            openMemberDashboard: (id) => {
-                const member = state.team.find(m => m.id === id);
+            openMemberDashboard: function(id) {
+                const member = state.team.find(function(m) { return m.id === id; });
                 if(!member) return;
 
                 let mrrMcGerado = 0;
@@ -1995,29 +2132,29 @@
                 if (state.filterMode === 'forecast') {
                     subtitle = 'Projeção (Run Rate Atual)';
                     mCostTotal = Number(member.cost||0);
-                    mrrMcGerado = state.clients.filter(c => c.status !== 'Churn').reduce((sum, c) => {
+                    mrrMcGerado = state.clients.filter(function(c) { return c.status !== 'Churn'; }).reduce(function(sum, c) {
                         return sum + calcMargin(Number(c.recurringValue||0) + Number(c.oneTimeValue||0)) * getMemberPct(c, member.id);
                     }, 0);
                 } else if (state.filterMode === 'month') {
                     subtitle = `Realizado em ${state.selectedMonth}`;
                     mCostTotal = Number(member.cost||0);
-                    const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
-                    mrrMcGerado = moTrans.reduce((sum, t) => {
-                        const c = state.clients.find(x => x.id === t.clientId);
+                    const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
+                    mrrMcGerado = moTrans.reduce(function(sum, t) {
+                        const c = state.clients.find(function(x) { return x.id === t.clientId; });
                         return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
                     }, 0);
                 } else {
                     const contextYear = state.filterMode === 'year' ? state.selectedYear : 'Todo o Período Histórico';
                     subtitle = `Acumulado Histórico (${contextYear})`;
-                    const closuresToUse = state.filterMode === 'year' ? state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear)) : state.closures;
+                    const closuresToUse = state.filterMode === 'year' ? state.closures.filter(function(c) { return c.month && c.month.startsWith(state.selectedYear); }) : state.closures;
                     
-                    mrrMcGerado = closuresToUse.reduce((sum, closure) => {
+                    mrrMcGerado = closuresToUse.reduce(function(sum, closure) {
                         if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) {
                             return sum + closure.memberMargins[member.id];
                         }
-                        const moTrans = state.transactions.filter(t => t.month === closure.month);
-                        return sum + moTrans.reduce((s, t) => { 
-                            const c = state.clients.find(x => x.id === t.clientId); 
+                        const moTrans = state.transactions.filter(function(t) { return t.month === closure.month; });
+                        return sum + moTrans.reduce(function(s, t) { 
+                            const c = state.clients.find(function(x) { return x.id === t.clientId; }); 
                             return s + (c ? t.marginValue * getMemberPct(c, member.id) : 0); 
                         }, 0);
                     }, 0);
@@ -2025,12 +2162,12 @@
                 }
 
                 const lucro = mrrMcGerado - mCostTotal;
-                const activeProjects = state.clients.filter(c => c.status !== 'Churn').map(c => {
+                const activeProjects = state.clients.filter(function(c) { return c.status !== 'Churn'; }).map(function(c) {
                     let pct = getMemberPct(c, member.id) * 100;
                     if(pct > 0) {
                         const margin = calcMargin(Number(c.recurringValue||0));
                         const memberCut = margin * (pct/100);
-                        return { ...c, pct, memberCut, totalMargin: margin };
+                        return { ...c, pct: pct, memberCut: memberCut, totalMargin: margin };
                     }
                     return null;
                 }).filter(Boolean);
@@ -2074,14 +2211,14 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#222]">
-                                ${activeProjects.length > 0 ? activeProjects.map(p => `
+                                ${activeProjects.length > 0 ? activeProjects.map(function(p) { return `
                                     <tr class="hover:bg-[#1a1a1a] transition-colors">
                                         <td class="p-4 font-bold text-white text-sm">${escapeHTML(p.name)} <span class="text-[9px] uppercase tracking-wider font-bold bg-[#222] border border-[#333] px-2 py-0.5 rounded ml-2 text-gray-400 align-middle">${escapeHTML(p.phase)}</span></td>
                                         <td class="p-4 text-center font-bold text-red-400">${p.pct}%</td>
                                         <td class="p-4 text-right text-gray-400 font-medium">${formatCurrency(p.totalMargin)}</td>
                                         <td class="p-4 text-right font-black text-emerald-400">${formatCurrency(p.memberCut)}</td>
                                     </tr>
-                                `).join('') : `<tr><td colspan="4" class="p-8 text-center text-gray-500 italic font-medium">Nenhum projeto ativo associado a este membro no momento.</td></tr>`}
+                                `; }).join('') : `<tr><td colspan="4" class="p-8 text-center text-gray-500 italic font-medium">Nenhum projeto ativo associado a este membro no momento.</td></tr>`}
                             </tbody>
                         </table>
                     </div>
@@ -2098,31 +2235,31 @@
                     m.classList.remove('hidden');
                     m.classList.add('flex');
                 }
-                lucide.createIcons();
+                if(window.lucide) window.lucide.createIcons();
             },
 
-            lockMonth: async () => {
+            lockMonth: async function() {
                 if(!state.user) return;
                 
-                const btn = document.getElementById('btn-lock-month');
-                if(btn) window.appActions.setLoading(true, 'btn-lock-month');
+                window.appActions.setLoading(true, 'btn-lock-month');
 
-                const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
+                const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
                 let tRealRec=0, tMargin=0;
-                const activeClients = state.clients.filter(c => c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(t => t.clientId === c.id)));
+                
+                const activeClients = state.clients.filter(function(c) { return c.status !== 'Churn' || (c.status === 'Churn' && moTrans.some(function(t) { return t.clientId === c.id; })); });
                 
                 const memberMargins = {};
                 
-                activeClients.forEach(c => {
-                    const cTrans = moTrans.filter(t => t.clientId === c.id);
-                    const recT = cTrans.find(t => t.type === 'recorrente'); 
-                    const otT = cTrans.find(t => t.type === 'onetime');
+                activeClients.forEach(function(c) {
+                    const cTrans = moTrans.filter(function(t) { return t.clientId === c.id; });
+                    const recT = cTrans.find(function(t) { return t.type === 'recorrente'; }); 
+                    const otT = cTrans.find(function(t) { return t.type === 'onetime'; });
                     tRealRec += recT?recT.value:0; 
                     
                     const clientMargin = (recT?recT.marginValue:0) + (otT?otT.marginValue:0);
                     tMargin += clientMargin;
                     
-                    state.team.forEach(m => {
+                    state.team.forEach(function(m) {
                         const pct = getMemberPct(c, m.id);
                         if(pct > 0) {
                             if(!memberMargins[m.id]) memberMargins[m.id] = 0;
@@ -2131,8 +2268,8 @@
                     });
                 });
 
-                const cFixo = state.team.reduce((a, c) => a + Number(c.cost||0), 0);
-                const cVarFornecedores = activeClients.reduce((a, c) => a + Number(c.supplierCost||0), 0);
+                const cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost||0); }, 0);
+                const cVarFornecedores = state.expenses.reduce(function(a, e) { return a + Number(e.amount || 0); }, 0);
                 const cTotal = cFixo + cVarFornecedores;
 
                 const data = { 
@@ -2152,17 +2289,17 @@
                     window.showToast('Erro ao congelar mês.', 'error'); 
                     console.error(e); 
                 } finally { 
-                    if(btn) window.appActions.setLoading(false, 'btn-lock-month'); 
+                    window.appActions.setLoading(false, 'btn-lock-month'); 
                 }
             },
             
-            openHistoryModal: (month = null) => {
+            openHistoryModal: function(month = null) {
                 const m = document.getElementById('modal-history'); 
                 const minp = document.getElementById('history-month');
                 let closureData = null;
                 
-                if(month) {
-                    closureData = state.closures.find(x => x.month === month);
+                if(month && month !== 'undefined' && month !== 'null') {
+                    closureData = state.closures.find(function(x) { return x.month === month; });
                     if(!closureData) return;
                     document.getElementById('history-modal-title').innerText = 'Corrigir DFC Histórico'; 
                     minp.value = closureData.month; 
@@ -2181,7 +2318,7 @@
                 
                 const memContainer = document.getElementById('history-members-container');
                 if(memContainer) {
-                    memContainer.innerHTML = state.team.map(mbr => {
+                    memContainer.innerHTML = state.team.map(function(mbr) {
                         const val = (closureData && closureData.memberMargins && closureData.memberMargins[mbr.id]) ? closureData.memberMargins[mbr.id] : 0;
                         return `
                             <div class="flex justify-between items-center bg-[#0a0a0a] p-2.5 rounded-lg border border-[#333]">
@@ -2205,13 +2342,12 @@
                 }
             },
             
-            saveHistory: async () => {
+            saveHistory: async function() {
                 if(!state.user) return;
-                const btn = document.getElementById('btn-save-history');
                 window.appActions.setLoading(true, 'btn-save-history');
 
                 const memberMargins = {};
-                document.querySelectorAll('.hist-mem-val').forEach(input => {
+                document.querySelectorAll('.hist-mem-val').forEach(function(input) {
                     const mId = input.getAttribute('data-member-id');
                     const val = Number(input.getAttribute('data-value') || 0);
                     if (val > 0) memberMargins[mId] = val;
@@ -2244,11 +2380,11 @@
                     window.appActions.setLoading(false, 'btn-save-history'); 
                 }
             }
-        };
+        });
 
         const mInput = document.getElementById('selected-month');
         if(mInput) {
-            mInput.addEventListener('change', (e) => { 
+            mInput.addEventListener('change', function(e) { 
                 state.selectedMonth = e.target.value; 
                 updateYearOptions(); 
                 renderContent(); 
@@ -2258,7 +2394,7 @@
 
         const yInput = document.getElementById('selected-year');
         if(yInput) {
-            yInput.addEventListener('change', (e) => { 
+            yInput.addEventListener('change', function(e) { 
                 state.selectedYear = e.target.value; 
                 renderContent(); 
             });
@@ -2292,7 +2428,7 @@
         }
 
         let unsubListeners = [];
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, function(user) {
             state.user = user;
             const login = document.getElementById('login-screen');
             const app = document.getElementById('app-screen');
@@ -2300,41 +2436,45 @@
             if(user) {
                 updateHeaderGreeting();
                 if(login) login.classList.add('opacity-0');
-                setTimeout(() => {
+                setTimeout(function() {
                     if(login) login.classList.add('hidden'); 
                     if(app) app.classList.remove('hidden');
-                    setTimeout(() => {
+                    setTimeout(function() {
                         if(app) app.classList.remove('opacity-0');
                     }, 50);
                 }, 500);
                 
-                unsubListeners.forEach(fn => fn()); 
+                unsubListeners.forEach(function(fn) { fn(); }); 
                 unsubListeners = [];
                 
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'clients'), s => { 
-                    state.clients = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'clients'), function(s) { 
+                    state.clients = s.docs.map(function(d) { return Object.assign({id: d.id}, d.data()); }); 
                     updateYearOptions(); 
                     renderContent(); 
                 }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), s => { 
-                    state.transactions = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'transactions'), function(s) { 
+                    state.transactions = s.docs.map(function(d) { return Object.assign({id: d.id}, d.data()); }); 
                     renderContent(); 
                 }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'team'), s => { 
-                    state.team = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'team'), function(s) { 
+                    state.team = s.docs.map(function(d) { return Object.assign({id: d.id}, d.data()); }); 
                     renderContent(); 
                 }));
-                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures'), s => { 
-                    state.closures = s.docs.map(d => ({id: d.id, ...d.data()})); 
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'expenses'), function(s) { 
+                    state.expenses = s.docs.map(function(d) { return Object.assign({id: d.id}, d.data()); }); 
+                    renderContent(); 
+                }));
+                unsubListeners.push(onSnapshot(collection(db, 'artifacts', appId, 'users', user.uid, 'monthly_closures'), function(s) { 
+                    state.closures = s.docs.map(function(d) { return Object.assign({id: d.id}, d.data()); }); 
                     updateYearOptions(); 
                     renderContent(); 
                 }));
             } else {
                 if(app) app.classList.add('opacity-0');
-                setTimeout(() => {
+                setTimeout(function() {
                     if(app) app.classList.add('hidden'); 
                     if(login) login.classList.remove('hidden');
-                    setTimeout(() => {
+                    setTimeout(function() {
                         if(login) login.classList.remove('opacity-0');
                     }, 50);
                 }, 500);
