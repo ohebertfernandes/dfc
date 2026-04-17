@@ -1,11 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SquadDFC - Gestão Financeira Premium</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { background-color: #0a0a0a; color: #e5e7eb; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif; overflow-x: hidden; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #141414; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
+        .hidden { display: none !important; }
+        
+        /* Animações Premium */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.97); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in { animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+
+    <script>
+        // Sistema de Notificações Global e Stubs de Proteção
+        window.showToast = function(msg, type) {
+            type = type || 'success';
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-xl font-bold text-white shadow-2xl z-[100] transition-all duration-500 transform translate-y-0 opacity-100 flex items-center gap-3 ${type === 'success' ? 'bg-emerald-600 border border-emerald-500/50' : 'bg-red-600 border border-red-500/50'}`;
+            toast.innerHTML = `<span>${msg}</span>`;
+            document.body.appendChild(toast);
+            if(window.lucide) { window.lucide.createIcons({root: toast}); }
+            
+            setTimeout(function() {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(function() { toast.remove(); }, 500);
+            }, 3500);
+        };
+
         window.appActions = {};
         const stubAction = function() {
             window.showToast("A carregar o sistema, aguarde um instante...", "error");
         };
         
         // Protege os botões para não quebrarem o JS
-        const fnNames = ['handleEmailAuth', 'loginWithGoogle', 'loginAnonymously', 'toggleAuthMode', 'changeTab', 'toggleMobileMenu', 'setFilterMode', 'setMemberChart', 'closeModal', 'saveClient', 'darBaixa', 'removeBaixa', 'openTeamModal', 'saveTeam', 'deleteTeam', 'openMemberDashboard', 'lockMonth', 'openHistoryModal', 'saveHistory', 'openExpenseModal', 'saveExpense', 'deleteExpense', 'addTeamAllocationRow', 'setClientFilter', 'updateProfilePhoto', 'saveProfile', 'logout'];
+        const fnNames = ['handleEmailAuth', 'loginWithGoogle', 'loginAnonymously', 'toggleAuthMode', 'changeTab', 'toggleMobileMenu', 'setFilterMode', 'setMemberChart', 'closeModal', 'saveClient', 'darBaixa', 'removeBaixa', 'openTeamModal', 'saveTeam', 'deleteTeam', 'openMemberDashboard', 'lockMonth', 'openHistoryModal', 'saveHistory', 'openExpenseModal', 'saveExpense', 'deleteExpense', 'addTeamAllocationRow', 'setClientFilter', 'updateProfilePhoto', 'saveProfile', 'logout', 'updateSelectedMonth', 'updateSelectedYear'];
         fnNames.forEach(function(fnName) {
             window.appActions[fnName] = stubAction;
         });
@@ -136,16 +192,16 @@
                         <button id="filter-btn-forecast" onclick="window.appActions.setFilterMode('forecast')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Previsto</button>
                     </div>
 
-                    <!-- Seletor de Mês -->
+                    <!-- Seletor de Mês Seguro com onChange nativo -->
                     <div class="relative" id="filter-month-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
-                        <input type="month" id="selected-month" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222]" />
+                        <input type="month" id="selected-month" onchange="window.appActions.updateSelectedMonth(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222]" />
                     </div>
 
-                    <!-- Seletor de Ano -->
+                    <!-- Seletor de Ano Seguro com onChange nativo -->
                     <div class="relative hidden" id="filter-year-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
-                        <select id="selected-year" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222] appearance-none">
+                        <select id="selected-year" onchange="window.appActions.updateSelectedYear(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222] appearance-none">
                         </select>
                         <i data-lucide="chevron-down" class="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none"></i>
                     </div>
@@ -159,7 +215,7 @@
     <!-- MODAIS -->
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
         
-        <!-- Modal Cliente Atualizado -->
+        <!-- Modal Cliente -->
         <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
                 <h2 id="client-modal-title" class="text-2xl font-bold text-white tracking-tight">Cadastrar Novo Projeto</h2>
@@ -206,14 +262,23 @@
                             <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Meta" />
                         </div>
                         <div class="col-span-2 md:col-span-1">
-                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Sistema Base</label>
-                            <input type="text" id="client-system" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: Kommo" />
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Custo do Fornecedor</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
+                                <input type="text" id="client-supplierCost" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 pl-9 text-white focus:border-red-500 outline-none" placeholder="0,00" />
+                            </div>
                         </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Tipo de Serviço</label>
-                        <input type="text" id="client-serviceType" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: CRM + Vendas" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Sistema</label>
+                            <input type="text" id="client-system" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: Kommo" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Tipo de Serviço</label>
+                            <input type="text" id="client-serviceType" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: CRM + Vendas" />
+                        </div>
                     </div>
 
                     <div class="bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mt-4 relative overflow-hidden">
@@ -466,7 +531,7 @@
         };
 
         function formatCurrency(val) {
-            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val) || 0);
         }
         
         function formatNumberToBR(val) {
@@ -475,17 +540,17 @@
         
         function calcMargin(val) {
             if (!val) return 0;
-            return ((val * 0.85) * 0.8575) * 0.35;
+            return ((Number(val) * 0.85) * 0.8575) * 0.35;
         }
 
         function getMemberPct(client, memberId) {
             if (client.teamAllocations && Array.isArray(client.teamAllocations)) {
                 const alloc = client.teamAllocations.find(function(a) { return a.memberId === memberId; });
                 if (alloc) {
-                    return alloc.percentage / 100;
+                    return Number(alloc.percentage) / 100;
                 }
             } else if (client.assignedMemberId === memberId) {
-                return (client.memberPercentage || 100) / 100;
+                return Number(client.memberPercentage || 100) / 100;
             }
             return 0;
         }
@@ -576,7 +641,10 @@
             const select = document.getElementById('selected-year');
             if(!select) return;
             const currentYear = new Date().getFullYear().toString();
-            const years = new Set([currentYear, state.selectedMonth.split('-')[0]]);
+            const years = new Set([currentYear]);
+            if (state.selectedMonth) {
+                years.add(state.selectedMonth.split('-')[0]);
+            }
             state.closures.forEach(function(c) {
                 if(c.month) years.add(c.month.split('-')[0]);
             });
@@ -632,7 +700,10 @@
                         mainCustos = [Number(closedMonth.custosTotais || 0)];
                     } else {
                         const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
-                        mainFaturamento = [moTrans.reduce(function(a, c) { return a + c.marginValue; }, 0)];
+                        mainFaturamento = [moTrans.reduce(function(a, c) { 
+                            const val = c.marginValue !== undefined ? Number(c.marginValue) : calcMargin(Number(c.value || 0));
+                            return a + (isNaN(val) ? 0 : val);
+                        }, 0)];
                         const cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost || 0); }, 0);
                         
                         let cVarFornecedores = 0;
@@ -666,8 +737,8 @@
                         }
                         return '';
                     });
-                    mainFaturamento = sorted.map(function(c) { return c.margemTotalRealizada; });
-                    mainCustos = sorted.map(function(c) { return c.custosTotais; });
+                    mainFaturamento = sorted.map(function(c) { return Number(c.margemTotalRealizada || 0); });
+                    mainCustos = sorted.map(function(c) { return Number(c.custosTotais || 0); });
                 }
 
                 if(state.chartInstance) {
@@ -741,7 +812,7 @@
                             let m = 0;
                             if (Number(c.recurringValue || 0) > 0) m += calcMargin(Number(c.recurringValue));
                             if (isClientOTActive(c, state.selectedMonth)) m += calcMargin(Number(c.oneTimeValue));
-                            return sum + m * getMemberPct(c, member.id);
+                            return sum + (m * getMemberPct(c, member.id));
                         }, 0);
                         mMargins = [margin]; 
                         mCosts = [memberCost];
@@ -749,13 +820,14 @@
                         mLabels = [state.selectedMonth];
                         const closedMonth = state.closures.find(function(c) { return c.month === state.selectedMonth; });
                         if (closedMonth && closedMonth.memberMargins && closedMonth.memberMargins[member.id] !== undefined) {
-                            mMargins = [closedMonth.memberMargins[member.id]];
+                            mMargins = [Number(closedMonth.memberMargins[member.id] || 0)];
                             mCosts = [memberCost];
                         } else {
                             const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
                             const margin = moTrans.reduce(function(sum, t) {
                                 const c = state.clients.find(function(x) { return x.id === t.clientId; });
-                                return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
+                                const tMargin = t.marginValue !== undefined ? Number(t.marginValue) : calcMargin(Number(t.value || 0));
+                                return sum + (c ? (isNaN(tMargin) ? 0 : tMargin) * getMemberPct(c, member.id) : 0);
                             }, 0);
                             mMargins = [margin]; 
                             mCosts = [memberCost];
@@ -775,12 +847,13 @@
                         
                         mMargins = sortedC.map(function(closure) {
                             if (closure.memberMargins && closure.memberMargins[member.id] !== undefined) {
-                                return closure.memberMargins[member.id];
+                                return Number(closure.memberMargins[member.id] || 0);
                             }
                             const moTrans = state.transactions.filter(function(t) { return t.month === closure.month; });
                             return moTrans.reduce(function(sum, t) {
                                 const c = state.clients.find(function(x) { return x.id === t.clientId; });
-                                return sum + (c ? t.marginValue * getMemberPct(c, member.id) : 0);
+                                const tMargin = t.marginValue !== undefined ? Number(t.marginValue) : calcMargin(Number(t.value || 0));
+                                return sum + (c ? (isNaN(tMargin) ? 0 : tMargin) * getMemberPct(c, member.id) : 0);
                             }, 0);
                         });
                         mCosts = sortedC.map(function() { return memberCost; }); 
@@ -849,6 +922,17 @@
             setupCurrencyMasks();
             updateYearOptions();
         }
+
+        window.appActions.updateSelectedMonth = function(val) {
+            state.selectedMonth = val;
+            updateYearOptions();
+            renderContent();
+        };
+
+        window.appActions.updateSelectedYear = function(val) {
+            state.selectedYear = val;
+            renderContent();
+        };
 
         function getDashboardHTML() {
             const mode = state.filterMode;
@@ -1123,9 +1207,13 @@
                     }, 0);
                     
                     const moTrans = state.transactions.filter(function(t) { return t.month === state.selectedMonth; });
-                    realMRR = moTrans.filter(function(t) { return t.type === 'recorrente'; }).reduce(function(a, c) { return a + c.value; }, 0);
-                    realOT = moTrans.filter(function(t) { return t.type === 'onetime'; }).reduce(function(a, c) { return a + c.value; }, 0);
-                    realMargin = moTrans.reduce(function(a, c) { return a + c.marginValue; }, 0);
+                    realMRR = moTrans.filter(function(t) { return t.type === 'recorrente'; }).reduce(function(a, c) { return a + Number(c.value || 0); }, 0);
+                    realOT = moTrans.filter(function(t) { return t.type === 'onetime'; }).reduce(function(a, c) { return a + Number(c.value || 0); }, 0);
+                    
+                    realMargin = moTrans.reduce(function(a, c) { 
+                        const val = c.marginValue !== undefined ? Number(c.marginValue) : calcMargin(Number(c.value || 0));
+                        return a + (isNaN(val) ? 0 : val); 
+                    }, 0);
 
                     cFixo = state.team.reduce(function(a, c) { return a + Number(c.cost || 0); }, 0);
                     
@@ -1263,7 +1351,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
                         ${['Todos', 'Manutenção', 'Implementação', 'Tratativa'].map(function(p) {
-                            return `<button onclick="window.appActions.setClientFilter(this.dataset.filter)" data-filter="${window.escapeHTML(p)}" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transform scale-105' : 'bg-[#111] text-gray-400 border border-[#333] hover:border-gray-500 hover:text-white'}">${window.escapeHTML(p)}</button>`;
+                            return `<button onclick="window.appActions.setClientFilter('${p}')" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transform scale-105' : 'bg-[#111] text-gray-400 border border-[#333] hover:border-gray-500 hover:text-white'}">${window.escapeHTML(p)}</button>`;
                         }).join('')}
                     </div>
                     <button onclick="window.appActions.openClientModal()" class="bg-white text-black px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-transform hover:-translate-y-0.5 shadow-lg w-full md:w-auto"><i data-lucide="plus" class="w-4 h-4"></i> Cadastrar Projeto</button>
@@ -1297,18 +1385,18 @@
                 let recorrenteActionHTML = '';
                 if(Number(client.recurringValue) > 0) {
                     if (recTrans) {
-                        recorrenteActionHTML = `<button onclick="window.appActions.removeBaixa(this.dataset.id)" data-id="${window.escapeHTML(recTrans.id)}" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
+                        recorrenteActionHTML = `<button onclick="window.appActions.removeBaixa('${window.escapeJS(recTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
                     } else {
-                        recorrenteActionHTML = `<button onclick="window.appActions.darBaixa(this.dataset.id, this.dataset.val, 'recorrente')" data-id="${window.escapeHTML(client.id)}" data-val="${recValueToSave}" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`;
+                        recorrenteActionHTML = `<button onclick="window.appActions.darBaixa('${window.escapeJS(client.id)}', ${recValueToSave}, 'recorrente')" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`;
                     }
                 }
                 
                 let onetimeActionHTML = '';
                 if(Number(client.oneTimeValue) > 0) {
                     if (otTrans) {
-                        onetimeActionHTML = `<button onclick="window.appActions.removeBaixa(this.dataset.id)" data-id="${window.escapeHTML(otTrans.id)}" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
+                        onetimeActionHTML = `<button onclick="window.appActions.removeBaixa('${window.escapeJS(otTrans.id)}')" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
                     } else {
-                        onetimeActionHTML = `<button onclick="window.appActions.darBaixa(this.dataset.id, this.dataset.val, 'onetime')" data-id="${window.escapeHTML(client.id)}" data-val="${otValueToSave}" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`;
+                        onetimeActionHTML = `<button onclick="window.appActions.darBaixa('${window.escapeJS(client.id)}', ${otValueToSave}, 'onetime')" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`;
                     }
                 }
 
@@ -1316,7 +1404,7 @@
                     <div class="bg-[#111] border ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#222] hover:border-[#444] shadow-lg hover:shadow-xl'} rounded-2xl p-6 relative transition-all duration-300 group flex flex-col h-full">
                         ${isChurn ? `<div class="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] uppercase font-black px-3 py-1.5 rounded-lg shadow-lg rotate-12">CHURN</div>` : ''}
                         
-                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal(this.dataset.id)" data-id="${window.escapeHTML(client.id)}">
+                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal('${window.escapeJS(client.id)}')">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="pr-6">
                                     <h3 class="font-black text-xl text-white group-hover:text-red-400 transition-colors tracking-tight leading-tight">${window.escapeHTML(client.name)}</h3>
@@ -1387,10 +1475,10 @@
                     const lucro = mrrMcGerado - mCost;
                     
                     return `
-                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard(this.dataset.id)" data-id="${window.escapeHTML(member.id)}">
+                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard('${window.escapeJS(member.id)}')">
                         <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal(this.dataset.id)" data-id="${window.escapeHTML(member.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam(this.dataset.id)" data-id="${window.escapeHTML(member.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal('${window.escapeJS(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam('${window.escapeJS(member.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${(window.escapeHTML(member.name).charAt(0) || 'U').toUpperCase()}</div>
@@ -1448,8 +1536,8 @@
                     return `
                         <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 shadow-lg flex flex-col justify-between">
                             <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                <button onclick="window.appActions.openExpenseModal(this.dataset.id)" data-id="${window.escapeHTML(exp.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333]"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                                <button onclick="window.appActions.deleteExpense(this.dataset.id)" data-id="${window.escapeHTML(exp.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                                <button onclick="window.appActions.openExpenseModal('${window.escapeJS(exp.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333]"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                <button onclick="window.appActions.deleteExpense('${window.escapeJS(exp.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30"><i data-lucide="trash" class="w-4 h-4"></i></button>
                             </div>
                             <h3 class="font-bold text-lg text-white mb-1 pr-16">${window.escapeHTML(exp.name)}</h3>
                             <p class="text-[10px] font-bold uppercase tracking-wider ${client ? 'text-blue-400 bg-blue-900/20 border-blue-900/50' : 'text-gray-400 bg-[#222] border-[#333]'} px-2.5 py-1 rounded inline-block mb-4 border w-max">${client ? '<i data-lucide="folder" class="w-3 h-3 inline mr-1"></i> Projeto: ' + window.escapeHTML(client.name) : '<i data-lucide="globe" class="w-3 h-3 inline mr-1"></i> Custo Geral Operacional'}</p>
@@ -1503,7 +1591,10 @@
                 const pO = Number(client.oneTimeValue||0);
                 const rR = recT?recT.value:0;
                 const rO = otT?otT.value:0;
-                const mTotal = (recT?recT.marginValue:0) + (otT?otT.marginValue:0);
+                
+                const mTotal = (recT ? (recT.marginValue !== undefined ? Number(recT.marginValue) : calcMargin(Number(recT.value||0))) : 0) + 
+                               (otT ? (otT.marginValue !== undefined ? Number(otT.marginValue) : calcMargin(Number(otT.value||0))) : 0);
+                
                 const isPaid = (pR===0 || rR>0) && (pO===0 || rO>0);
                 const isPend = (pR>0 && rR===0) || (pO>0 && rO===0);
                 
@@ -1575,7 +1666,7 @@
                 html += state.closures.map(function(c) {
                     return `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/10 flex flex-col">
-                        <button onclick="window.appActions.openHistoryModal(this.dataset.month)" data-month="${window.escapeHTML(c.month)}" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="window.appActions.openHistoryModal('${window.escapeJS(c.month)}')" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                         
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-gray-400 shadow-inner border border-[#333] group-hover:bg-red-900/20 group-hover:border-red-500/30 group-hover:text-red-400 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></div>
@@ -1593,7 +1684,7 @@
                         
                         <div class="pt-4 border-t border-[#222] flex justify-between items-center">
                             <span class="text-[10px] text-gray-400 uppercase tracking-widest font-black">Líquido</span>
-                            <span class="font-black text-2xl ${c.lucroLiquido>=0?'text-emerald-500':'text-red-500'} tracking-tight">${formatCurrency(c.lucroLiquido)}</span>
+                            <span class="font-black text-2xl ${Number(c.lucroLiquido||0)>=0?'text-emerald-500':'text-red-500'} tracking-tight">${formatCurrency(c.lucroLiquido)}</span>
                         </div>
                     </div>
                 `;}).join('');
