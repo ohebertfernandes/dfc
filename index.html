@@ -51,6 +51,16 @@
                 .replace(/'/g, '&#39;');
         };
 
+        window.escapeJS = function(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, '\\n')
+                .replace(/\r/g, '\\r');
+        };
+
         window.showToast = function(msg, type) {
             type = type || 'success';
             const toast = document.createElement('div');
@@ -197,13 +207,13 @@
                         <button id="filter-btn-forecast" onclick="window.appActions.setFilterMode('forecast')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Previsto</button>
                     </div>
 
-                    <!-- Seletor de Mês -->
+                    <!-- Seletor de Mês Seguro -->
                     <div class="relative" id="filter-month-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <input type="month" id="selected-month" onchange="window.appActions.updateSelectedMonth(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222]" />
                     </div>
 
-                    <!-- Seletor de Ano -->
+                    <!-- Seletor de Ano Seguro -->
                     <div class="relative hidden" id="filter-year-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <select id="selected-year" onchange="window.appActions.updateSelectedYear(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222] appearance-none">
@@ -534,12 +544,6 @@
             selectedMemberId: null
         };
 
-        // Redefinir escapeHTML dentro do módulo para uso nos templates literais
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        }
-
         function formatCurrency(val) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val) || 0);
         }
@@ -634,7 +638,7 @@
                 navMenu.innerHTML = tabs.map(function(t) {
                     const activeClass = state.activeTab === t.id ? 'bg-red-600 text-white font-bold shadow-lg shadow-red-900/40 translate-x-1' : 'text-gray-400 hover:bg-[#222] hover:text-white font-medium hover:translate-x-1';
                     return `
-                    <button onclick="window.appActions.changeTab(this.dataset.id)" data-id="${escapeHTML(t.id)}" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${activeClass}">
+                    <button onclick="window.appActions.changeTab(this.dataset.id)" data-id="${window.escapeHTML(t.id)}" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${activeClass}">
                         <i data-lucide="${t.icon}" class="w-5 h-5"></i><span>${t.label}</span>
                     </button>`;
                 }).join('');
@@ -933,6 +937,17 @@
             updateYearOptions();
         }
 
+        window.appActions.updateSelectedMonth = function(val) {
+            state.selectedMonth = val;
+            updateYearOptions();
+            renderContent();
+        };
+
+        window.appActions.updateSelectedYear = function(val) {
+            state.selectedYear = val;
+            renderContent();
+        };
+
         function getDashboardHTML() {
             const mode = state.filterMode;
 
@@ -1038,7 +1053,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${window.escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${window.escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1099,21 +1114,21 @@
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                             <div class="p-6 rounded-2xl bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-[#222] shadow-lg relative overflow-hidden group">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="trending-up" class="w-16 h-16 text-gray-400"></i></div>
-                                <h3 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div> MRR Bruto Realizado (${escapeHTML(contextYear)})</h3>
+                                <h3 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div> MRR Bruto Realizado (${window.escapeHTML(contextYear)})</h3>
                                 <div class="text-3xl font-bold text-white mb-1">${formatCurrency(realMRR)}</div>
                                 <p class="text-xs text-gray-600 font-medium mt-2">Total bruto de todos os meses fechados.</p>
                             </div>
                             
                             <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/20 to-[#0a0a0a] border border-emerald-900/30 shadow-lg relative overflow-hidden group">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="dollar-sign" class="w-16 h-16 text-emerald-500"></i></div>
-                                <h3 class="text-emerald-500 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Margem DFC Gerada (${escapeHTML(contextYear)})</h3>
+                                <h3 class="text-emerald-500 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Margem DFC Gerada (${window.escapeHTML(contextYear)})</h3>
                                 <div class="text-3xl font-bold text-white mb-1">${formatCurrency(realMargin)}</div>
                                 <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Totais:</span><span class="text-red-400 font-bold">-${formatCurrency(cFixo)}</span></p>
                             </div>
                             
                             <div class="p-6 rounded-2xl ${lucro >= 0 ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-950/10 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 to-red-950/10 border-red-500/50'} border shadow-lg relative overflow-hidden group">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="wallet" class="w-16 h-16 ${lucro>=0?'text-emerald-400':'text-red-400'}"></i></div>
-                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Lucro Consolidado (${escapeHTML(contextYear)})</h3>
+                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Lucro Consolidado (${window.escapeHTML(contextYear)})</h3>
                                 <div class="text-4xl font-black text-white">${formatCurrency(lucro)}</div>
                             </div>
                         </div>
@@ -1122,7 +1137,7 @@
                         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex items-center justify-between mb-6">
-                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Crescimento em ${escapeHTML(contextYear)}</h3>
+                                    <h3 class="text-xl font-bold text-white tracking-tight">Análise de Crescimento em ${window.escapeHTML(contextYear)}</h3>
                                     <span class="text-[10px] text-red-300 bg-red-900/20 border border-red-900/50 px-2 py-1 rounded font-bold uppercase tracking-wider">Apenas Meses Fechados</span>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1134,7 +1149,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-50 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${window.escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${window.escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1145,7 +1160,7 @@
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-lg">
-                                <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Resumo (${escapeHTML(contextYear)})</h3>
+                                <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Resumo (${window.escapeHTML(contextYear)})</h3>
                                 <div class="space-y-4">
                                     <div class="bg-[#0a0a0a] rounded-xl border border-[#333] p-4 flex items-center justify-between">
                                         <span class="font-medium text-gray-400">Meses Fechados</span>
@@ -1257,7 +1272,7 @@
                             
                             <div class="p-6 rounded-2xl ${lucro >= 0 ? 'bg-gradient-to-br from-emerald-900/40 to-emerald-950/10 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 to-red-950/10 border-red-500/50'} border shadow-lg relative overflow-hidden group">
                                 <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><i data-lucide="wallet" class="w-16 h-16 ${lucro>=0?'text-emerald-400':'text-red-400'}"></i></div>
-                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado de ${escapeHTML(state.selectedMonth)} ${isLocked ? '(Fechado)' : ''}</h3>
+                                <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado de ${window.escapeHTML(state.selectedMonth)} ${isLocked ? '(Fechado)' : ''}</h3>
                                 <div class="text-4xl font-black text-white">${formatCurrency(lucro)}</div>
                                 <p class="text-xs text-white/50 font-medium mt-2">${lucro >= 0 ? '👍 Caixa Positivo.' : '⚠️ Atenção: Prejuízo ou faltam baixas.'}</p>
                             </div>
@@ -1279,7 +1294,7 @@
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
                                     <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-50 cursor-pointer">
-                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
+                                        ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${window.escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${window.escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
                                 <div class="h-80 w-full relative flex-1">
@@ -1290,7 +1305,7 @@
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-lg">
-                                <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Desempenho de Cobrança (${escapeHTML(state.selectedMonth)})</h3>
+                                <h3 class="text-base font-bold text-white mb-5 uppercase tracking-wide border-b border-[#333] pb-3">Desempenho de Cobrança (${window.escapeHTML(state.selectedMonth)})</h3>
                                 <div class="space-y-6">
                                     <div>
                                         <div class="flex justify-between text-sm mb-2 font-medium">
@@ -1350,7 +1365,7 @@
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <div class="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-hide">
                         ${['Todos', 'Manutenção', 'Implementação', 'Tratativa'].map(function(p) {
-                            return `<button onclick="window.appActions.setClientFilter(this.dataset.filter)" data-filter="${escapeHTML(p)}" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transform scale-105' : 'bg-[#111] text-gray-400 border border-[#333] hover:border-gray-500 hover:text-white'}">${escapeHTML(p)}</button>`;
+                            return `<button onclick="window.appActions.setClientFilter(this.dataset.filter)" data-filter="${window.escapeHTML(p)}" class="px-5 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 whitespace-nowrap ${state.clientFilter === p ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)] transform scale-105' : 'bg-[#111] text-gray-400 border border-[#333] hover:border-gray-500 hover:text-white'}">${window.escapeHTML(p)}</button>`;
                         }).join('')}
                     </div>
                     <button onclick="window.appActions.openClientModal()" class="bg-white text-black px-6 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-200 transition-transform hover:-translate-y-0.5 shadow-lg w-full md:w-auto"><i data-lucide="plus" class="w-4 h-4"></i> Cadastrar Projeto</button>
@@ -1374,28 +1389,28 @@
                 if (client.teamAllocations && client.teamAllocations.length > 0) {
                     teamBadges = client.teamAllocations.map(function(alloc) {
                         const m = state.team.find(function(x) { return x.id === alloc.memberId; });
-                        return m ? `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${escapeHTML(m.name.split(' ')[0])} (${alloc.percentage}%)</span>` : '';
+                        return m ? `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${window.escapeHTML(m.name.split(' ')[0])} (${alloc.percentage}%)</span>` : '';
                     }).join('');
                 } else if (client.assignedMemberId) { 
                     const m = state.team.find(function(x) { return x.id === client.assignedMemberId; });
-                    if (m) teamBadges = `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${escapeHTML(m.name.split(' ')[0])} (${client.memberPercentage||100}%)</span>`;
+                    if (m) teamBadges = `<span class="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${window.escapeHTML(m.name.split(' ')[0])} (${client.memberPercentage||100}%)</span>`;
                 }
 
                 let recorrenteActionHTML = '';
                 if(Number(client.recurringValue) > 0) {
                     if (recTrans) {
-                        recorrenteActionHTML = `<button onclick="window.appActions.removeBaixa(this.dataset.id)" data-id="${escapeHTML(recTrans.id)}" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
+                        recorrenteActionHTML = `<button onclick="window.appActions.removeBaixa(this.dataset.id)" data-id="${window.escapeHTML(recTrans.id)}" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
                     } else {
-                        recorrenteActionHTML = `<button onclick="window.appActions.darBaixa(this.dataset.id, this.dataset.val, 'recorrente')" data-id="${escapeHTML(client.id)}" data-val="${recValueToSave}" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`;
+                        recorrenteActionHTML = `<button onclick="window.appActions.darBaixa(this.dataset.id, this.dataset.val, 'recorrente')" data-id="${window.escapeHTML(client.id)}" data-val="${recValueToSave}" class="text-xs bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-md font-bold transition-all shadow-md hover:-translate-y-0.5">Confirmar Pgt.</button>`;
                     }
                 }
                 
                 let onetimeActionHTML = '';
                 if(Number(client.oneTimeValue) > 0) {
                     if (otTrans) {
-                        onetimeActionHTML = `<button onclick="window.appActions.removeBaixa(this.dataset.id)" data-id="${escapeHTML(otTrans.id)}" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
+                        onetimeActionHTML = `<button onclick="window.appActions.removeBaixa(this.dataset.id)" data-id="${window.escapeHTML(otTrans.id)}" class="text-xs bg-emerald-500/10 text-emerald-400 px-3 py-1.5 rounded-md border border-emerald-500/20 flex items-center gap-1.5 font-bold hover:bg-emerald-500/20 transition-colors"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Recebido</button>`;
                     } else {
-                        onetimeActionHTML = `<button onclick="window.appActions.darBaixa(this.dataset.id, this.dataset.val, 'onetime')" data-id="${escapeHTML(client.id)}" data-val="${otValueToSave}" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`;
+                        onetimeActionHTML = `<button onclick="window.appActions.darBaixa(this.dataset.id, this.dataset.val, 'onetime')" data-id="${window.escapeHTML(client.id)}" data-val="${otValueToSave}" class="text-xs bg-[#222] hover:bg-white hover:text-black text-gray-300 border border-[#444] px-3 py-1.5 rounded-md font-bold transition-all hover:-translate-y-0.5">Confirmar Pgt.</button>`;
                     }
                 }
 
@@ -1403,12 +1418,12 @@
                     <div class="bg-[#111] border ${isChurn ? 'border-red-900/50 opacity-60' : 'border-[#222] hover:border-[#444] shadow-lg hover:shadow-xl'} rounded-2xl p-6 relative transition-all duration-300 group flex flex-col h-full">
                         ${isChurn ? `<div class="absolute -top-3 -right-3 bg-red-600 text-white text-[10px] uppercase font-black px-3 py-1.5 rounded-lg shadow-lg rotate-12">CHURN</div>` : ''}
                         
-                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal(this.dataset.id)" data-id="${escapeHTML(client.id)}">
+                        <div class="flex-1 cursor-pointer" onclick="window.appActions.openClientModal(this.dataset.id)" data-id="${window.escapeHTML(client.id)}">
                             <div class="flex justify-between items-start mb-4">
                                 <div class="pr-6">
-                                    <h3 class="font-black text-xl text-white group-hover:text-red-400 transition-colors tracking-tight leading-tight">${escapeHTML(client.name)}</h3>
+                                    <h3 class="font-black text-xl text-white group-hover:text-red-400 transition-colors tracking-tight leading-tight">${window.escapeHTML(client.name)}</h3>
                                     <div class="flex flex-wrap gap-2 mt-2">
-                                        <span class="text-[10px] uppercase font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-0.5 rounded">${escapeHTML(client.phase)}</span>
+                                        <span class="text-[10px] uppercase font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-0.5 rounded">${window.escapeHTML(client.phase)}</span>
                                         ${teamBadges}
                                     </div>
                                 </div>
@@ -1417,7 +1432,7 @@
                             
                             <div class="bg-[#0a0a0a] rounded-xl p-3 border border-[#222] mb-4">
                                 <div class="grid grid-cols-2 gap-2 text-xs">
-                                    <div><span class="text-gray-600 block text-[9px] uppercase font-bold mb-0.5">Sistema</span><span class="text-gray-300 font-medium">${escapeHTML(client.system) || '---'}</span></div>
+                                    <div><span class="text-gray-600 block text-[9px] uppercase font-bold mb-0.5">Sistema</span><span class="text-gray-300 font-medium">${window.escapeHTML(client.system) || '---'}</span></div>
                                     <div><span class="text-gray-600 block text-[9px] uppercase font-bold mb-0.5">Custo Fornecedor</span><span class="text-red-400 font-medium">${client.supplierCost ? formatCurrency(client.supplierCost) : '---'}</span></div>
                                 </div>
                             </div>
@@ -1474,16 +1489,16 @@
                     const lucro = mrrMcGerado - mCost;
                     
                     return `
-                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard(this.dataset.id)" data-id="${escapeHTML(member.id)}">
+                    <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-xl flex flex-col cursor-pointer" onclick="window.appActions.openMemberDashboard(this.dataset.id)" data-id="${window.escapeHTML(member.id)}">
                         <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal(this.dataset.id)" data-id="${escapeHTML(member.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam(this.dataset.id)" data-id="${escapeHTML(member.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.openTeamModal(this.dataset.id)" data-id="${window.escapeHTML(member.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333] transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                            <button onclick="event.stopPropagation(); window.appActions.deleteTeam(this.dataset.id)" data-id="${window.escapeHTML(member.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30 transition-colors"><i data-lucide="trash" class="w-4 h-4"></i></button>
                         </div>
                         <div class="flex items-center gap-4 mb-6">
-                            <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${(escapeHTML(member.name).charAt(0) || 'U').toUpperCase()}</div>
+                            <div class="w-14 h-14 bg-gradient-to-br from-red-800 to-red-600 rounded-xl flex items-center justify-center text-2xl font-black text-white shadow-lg shadow-red-900/40 border border-red-500/50">${(window.escapeHTML(member.name).charAt(0) || 'U').toUpperCase()}</div>
                             <div>
-                                <h3 class="font-black text-xl text-white tracking-tight">${escapeHTML(member.name)}</h3>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${escapeHTML(member.role) || 'Membro da Equipe'}</p>
+                                <h3 class="font-black text-xl text-white tracking-tight">${window.escapeHTML(member.name)}</h3>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">${window.escapeHTML(member.role) || 'Membro da Equipe'}</p>
                             </div>
                         </div>
                         <div class="space-y-1 bg-[#0a0a0a] rounded-xl p-4 border border-[#222] mb-5">
@@ -1505,7 +1520,7 @@
                                     } else {
                                         p = c.memberPercentage || 100;
                                     }
-                                    return `<span class="text-[10px] font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-1 rounded flex items-center gap-1">${escapeHTML(c.name)} <span class="text-red-500">${p}%</span></span>`;
+                                    return `<span class="text-[10px] font-bold text-gray-300 bg-[#222] border border-[#333] px-2 py-1 rounded flex items-center gap-1">${window.escapeHTML(c.name)} <span class="text-red-500">${p}%</span></span>`;
                                 }).join('')}
                                 ${activeProjects.length===0 ? '<span class="text-[10px] text-gray-600 font-medium italic">Nenhum projeto associado.</span>':''}
                             </div>
@@ -1535,11 +1550,11 @@
                     return `
                         <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-[#444] transition-all duration-300 shadow-lg flex flex-col justify-between">
                             <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                                <button onclick="window.appActions.openExpenseModal(this.dataset.id)" data-id="${escapeHTML(exp.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333]"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                                <button onclick="window.appActions.deleteExpense(this.dataset.id)" data-id="${escapeHTML(exp.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                                <button onclick="window.appActions.openExpenseModal(this.dataset.id)" data-id="${window.escapeHTML(exp.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-white hover:bg-[#333]"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                <button onclick="window.appActions.deleteExpense(this.dataset.id)" data-id="${window.escapeHTML(exp.id)}" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-900/30"><i data-lucide="trash" class="w-4 h-4"></i></button>
                             </div>
-                            <h3 class="font-bold text-lg text-white mb-1 pr-16">${escapeHTML(exp.name)}</h3>
-                            <p class="text-[10px] font-bold uppercase tracking-wider ${client ? 'text-blue-400 bg-blue-900/20 border-blue-900/50' : 'text-gray-400 bg-[#222] border-[#333]'} px-2.5 py-1 rounded inline-block mb-4 border w-max">${client ? '<i data-lucide="folder" class="w-3 h-3 inline mr-1"></i> Projeto: ' + escapeHTML(client.name) : '<i data-lucide="globe" class="w-3 h-3 inline mr-1"></i> Custo Geral Operacional'}</p>
+                            <h3 class="font-bold text-lg text-white mb-1 pr-16">${window.escapeHTML(exp.name)}</h3>
+                            <p class="text-[10px] font-bold uppercase tracking-wider ${client ? 'text-blue-400 bg-blue-900/20 border-blue-900/50' : 'text-gray-400 bg-[#222] border-[#333]'} px-2.5 py-1 rounded inline-block mb-4 border w-max">${client ? '<i data-lucide="folder" class="w-3 h-3 inline mr-1"></i> Projeto: ' + window.escapeHTML(client.name) : '<i data-lucide="globe" class="w-3 h-3 inline mr-1"></i> Custo Geral Operacional'}</p>
                             <div class="text-2xl font-black text-red-400 mt-2">-${formatCurrency(exp.amount)} <span class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">/mês</span></div>
                         </div>
                     `;
@@ -1560,7 +1575,7 @@
                         <div class="absolute -top-24 -right-24 w-48 h-48 bg-red-900/20 rounded-full blur-3xl pointer-events-none"></div>
                         
                         <div class="relative z-10">
-                            <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">Fechamento do Mês: <span class="text-red-500">${escapeHTML(state.selectedMonth)}</span></h2>
+                            <h2 class="text-2xl font-black text-white tracking-tight flex items-center gap-2">Fechamento do Mês: <span class="text-red-500">${window.escapeHTML(state.selectedMonth)}</span></h2>
                             <p class="text-sm text-gray-400 mt-1">Cruze o previsto em contrato com o que realmente entrou em caixa.</p>
                         </div>
                         ${isLocked ? `<div class="relative z-10 bg-red-900/20 text-red-400 border border-red-900/50 px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-inner"><i data-lucide="lock" class="w-4 h-4"></i> Mês Travado no Histórico</div>` : ''}
@@ -1608,7 +1623,7 @@
 
                 html += `
                     <tr class="hover:bg-[#1a1a1a] transition-colors group">
-                        <td class="p-5 font-bold text-white text-sm">${escapeHTML(client.name)} ${client.status==='Churn'?'<span class="text-red-500 text-[9px] bg-red-900/20 px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide border border-red-900/50 align-middle">Churn</span>':''}</td>
+                        <td class="p-5 font-bold text-white text-sm">${window.escapeHTML(client.name)} ${client.status==='Churn'?'<span class="text-red-500 text-[9px] bg-red-900/20 px-1.5 py-0.5 rounded ml-2 uppercase tracking-wide border border-red-900/50 align-middle">Churn</span>':''}</td>
                         <td class="p-5 text-right text-xs">
                             ${pR>0?`<div class="text-gray-400">MRR: ${formatCurrency(pR)}</div>`:''}
                             ${pO>0?`<div class="text-gray-500 mt-1">O.T.: ${formatCurrency(pO)}</div>`:''}
@@ -1665,12 +1680,12 @@
                 html += state.closures.map(function(c) {
                     return `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group hover:border-red-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-900/10 flex flex-col">
-                        <button onclick="window.appActions.openHistoryModal(this.dataset.month)" data-month="${escapeHTML(c.month)}" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                        <button onclick="window.appActions.openHistoryModal(this.dataset.month)" data-month="${window.escapeHTML(c.month)}" class="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 opacity-0 group-hover:opacity-100 hover:text-white hover:bg-[#333] transition-all"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                         
                         <div class="flex items-center gap-4 mb-6">
                             <div class="w-14 h-14 bg-[#1a1a1a] rounded-xl flex items-center justify-center text-gray-400 shadow-inner border border-[#333] group-hover:bg-red-900/20 group-hover:border-red-500/30 group-hover:text-red-400 transition-colors"><i data-lucide="calendar-days" class="w-6 h-6"></i></div>
                             <div>
-                                <h3 class="font-black text-2xl text-white tracking-tighter">${escapeHTML(c.month)}</h3>
+                                <h3 class="font-black text-2xl text-white tracking-tighter">${window.escapeHTML(c.month)}</h3>
                                 <span class="text-[9px] uppercase tracking-widest font-bold text-emerald-500 bg-emerald-900/20 border border-emerald-900/50 px-2 py-0.5 rounded flex items-center gap-1 w-max mt-1"><i data-lucide="lock" class="w-3 h-3"></i> Validado</span>
                             </div>
                         </div>
@@ -1712,8 +1727,8 @@
                                 <input type="file" id="profile-photo-upload" accept="image/*" class="hidden" onchange="window.appActions.updateProfilePhoto(this)">
                             </div>
                             <div class="mb-2">
-                                <h2 class="text-3xl font-black text-white tracking-tight">${escapeHTML(userName) || 'Conta Visitante'}</h2>
-                                <p class="text-gray-400 font-medium text-sm mt-1 bg-[#222] px-3 py-1 rounded-full border border-[#333] inline-block">${escapeHTML(userEmail)}</p>
+                                <h2 class="text-3xl font-black text-white tracking-tight">${window.escapeHTML(userName) || 'Conta Visitante'}</h2>
+                                <p class="text-gray-400 font-medium text-sm mt-1 bg-[#222] px-3 py-1 rounded-full border border-[#333] inline-block">${window.escapeHTML(userEmail)}</p>
                             </div>
                         </div>
 
@@ -1727,7 +1742,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Nome de Exibição Público</label>
-                                <input type="text" id="profile-name" value="${escapeHTML(userName)}" class="w-full bg-[#111] border border-[#333] rounded-xl p-3.5 text-white font-medium focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="Ex: Maria Souza" />
+                                <input type="text" id="profile-name" value="${window.escapeHTML(userName)}" class="w-full bg-[#111] border border-[#333] rounded-xl p-3.5 text-white font-medium focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all outline-none" placeholder="Ex: Maria Souza" />
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider flex justify-between">
@@ -1776,7 +1791,7 @@
             const greetingEl = document.getElementById('user-greeting');
             const snEl = document.getElementById('sidebar-user-name');
             if(greetingEl) {
-                greetingEl.innerHTML = `Logado como: <span class="font-bold text-white">${escapeHTML(firstName)}</span>`;
+                greetingEl.innerHTML = `Logado como: <span class="font-bold text-white">${window.escapeHTML(firstName)}</span>`;
                 greetingEl.classList.remove('hidden');
             }
             if(snEl) {
@@ -1795,17 +1810,6 @@
                 if(saImg) saImg.classList.add('hidden');
             }
         }
-
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                try {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } catch(e) {
-                    console.error("Auto-login token falhou. Pode iniciar como Visitante.", e);
-                }
-            }
-        };
-        initAuth();
 
         let unsubListeners = [];
         onAuthStateChanged(auth, function(user) {
