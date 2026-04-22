@@ -51,16 +51,6 @@
                 .replace(/'/g, '&#39;');
         };
 
-        window.escapeJS = function(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/\\/g, '\\\\')
-                .replace(/'/g, "\\'")
-                .replace(/"/g, '\\"')
-                .replace(/\n/g, '\\n')
-                .replace(/\r/g, '\\r');
-        };
-
         window.showToast = function(msg, type) {
             type = type || 'success';
             const toast = document.createElement('div');
@@ -75,7 +65,7 @@
             }, 3500);
         };
 
-        // Stub de Ações - Evita erros se clicar em algo antes de o sistema carregar completamente
+        // Stub de Ações - Impede que botões quebrem se clicados antes do módulo carregar
         window.appActions = {};
         const stubAction = function() { window.showToast("A carregar o sistema, aguarde um instante...", "error"); };
         const fnNames = ['handleEmailAuth', 'loginWithGoogle', 'loginAnonymously', 'toggleAuthMode', 'changeTab', 'toggleMobileMenu', 'setFilterMode', 'setMemberChart', 'closeModal', 'saveClient', 'darBaixa', 'removeBaixa', 'openTeamModal', 'saveTeam', 'deleteTeam', 'openMemberDashboard', 'lockMonth', 'openHistoryModal', 'saveHistory', 'openExpenseModal', 'saveExpense', 'deleteExpense', 'addTeamAllocationRow', 'setClientFilter', 'updateProfilePhoto', 'saveProfile', 'logout', 'updateSelectedMonth', 'updateSelectedYear'];
@@ -207,13 +197,13 @@
                         <button id="filter-btn-forecast" onclick="window.appActions.setFilterMode('forecast')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Previsto</button>
                     </div>
 
-                    <!-- Seletor de Mês Seguro -->
+                    <!-- Seletor de Mês -->
                     <div class="relative" id="filter-month-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <input type="month" id="selected-month" onchange="window.appActions.updateSelectedMonth(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222]" />
                     </div>
 
-                    <!-- Seletor de Ano Seguro -->
+                    <!-- Seletor de Ano -->
                     <div class="relative hidden" id="filter-year-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <select id="selected-year" onchange="window.appActions.updateSelectedYear(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222] appearance-none">
@@ -230,7 +220,7 @@
     <!-- MODAIS -->
     <div id="modal-backdrop" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 transition-all">
         
-        <!-- Modal Cliente -->
+        <!-- Modal Cliente Atualizado -->
         <div id="modal-client" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center sticky top-0 bg-[#141414]/95 backdrop-blur z-20">
                 <h2 id="client-modal-title" class="text-2xl font-bold text-white tracking-tight">Cadastrar Novo Projeto</h2>
@@ -274,7 +264,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Fornecedor Principal</label>
-                            <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Meta" />
+                            <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: Meta, AWS..." />
                         </div>
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Custo do Fornecedor</label>
@@ -386,7 +376,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Fixo Mensal (R$)</label>
+                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Mensal (R$)</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
                         <input type="text" id="expense-amount" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" />
@@ -524,6 +514,18 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e';
+
+        // TENTA LOGAR AUTOMATICAMENTE O UTILIZADOR NO AMBIENTE
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } catch(e) {
+                    console.error("Auto login token falhou:", e);
+                }
+            }
+        };
+        initAuth();
 
         function getInitialMonth() {
             const d = new Date(); 
@@ -937,17 +939,6 @@
             updateYearOptions();
         }
 
-        window.appActions.updateSelectedMonth = function(val) {
-            state.selectedMonth = val;
-            updateYearOptions();
-            renderContent();
-        };
-
-        window.appActions.updateSelectedYear = function(val) {
-            state.selectedYear = val;
-            renderContent();
-        };
-
         function getDashboardHTML() {
             const mode = state.filterMode;
 
@@ -1148,7 +1139,7 @@
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
-                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-50 cursor-pointer">
+                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
                                         ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${window.escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${window.escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
@@ -1293,7 +1284,7 @@
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
-                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-50 cursor-pointer">
+                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
                                         ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${window.escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${window.escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
