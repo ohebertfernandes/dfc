@@ -40,7 +40,7 @@
     </style>
 
     <script>
-        // Funções de Segurança Globais Inquebráveis
+        // Funções de Segurança Globais Iniciais
         window.escapeHTML = function(str) {
             if (str === null || str === undefined) return '';
             return String(str)
@@ -57,7 +57,7 @@
             toast.className = `fixed bottom-6 right-6 px-5 py-3.5 rounded-xl font-bold text-white shadow-2xl z-[100] transition-all duration-500 transform translate-y-0 opacity-100 flex items-center gap-3 ${type === 'success' ? 'bg-emerald-600 border border-emerald-500/50' : 'bg-red-600 border border-red-500/50'}`;
             toast.innerHTML = `<span>${window.escapeHTML(msg)}</span>`;
             document.body.appendChild(toast);
-            if(window.lucide) window.lucide.createIcons({root: toast});
+            if(window.lucide) { window.lucide.createIcons({root: toast}); }
             
             setTimeout(function() {
                 toast.classList.add('opacity-0', 'translate-y-4');
@@ -65,9 +65,9 @@
             }, 3500);
         };
 
-        // Stub de Ações - Evita erros se clicar antes de carregar o Firebase
+        // Stub de Ações - Evita erros se clicar em algo antes de o sistema carregar completamente
         window.appActions = {};
-        const stubAction = function() { window.showToast("A carregar o sistema, aguarde...", "error"); };
+        const stubAction = function() { window.showToast("A carregar o sistema, aguarde um instante...", "error"); };
         const fnNames = ['handleEmailAuth', 'loginWithGoogle', 'loginAnonymously', 'toggleAuthMode', 'changeTab', 'toggleMobileMenu', 'setFilterMode', 'setMemberChart', 'closeModal', 'saveClient', 'darBaixa', 'removeBaixa', 'openTeamModal', 'saveTeam', 'deleteTeam', 'openMemberDashboard', 'lockMonth', 'openHistoryModal', 'saveHistory', 'openExpenseModal', 'saveExpense', 'deleteExpense', 'addTeamAllocationRow', 'setClientFilter', 'updateProfilePhoto', 'saveProfile', 'logout', 'updateSelectedMonth', 'updateSelectedYear'];
         fnNames.forEach(function(fnName) { window.appActions[fnName] = stubAction; });
     </script>
@@ -197,13 +197,13 @@
                         <button id="filter-btn-forecast" onclick="window.appActions.setFilterMode('forecast')" class="px-4 py-1.5 text-xs font-bold rounded-md text-gray-500 hover:text-white transition-all">Previsto</button>
                     </div>
 
-                    <!-- Seletor de Mês Seguro -->
+                    <!-- Seletor de Mês -->
                     <div class="relative" id="filter-month-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <input type="month" id="selected-month" onchange="window.appActions.updateSelectedMonth(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-4 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222]" />
                     </div>
 
-                    <!-- Seletor de Ano Seguro -->
+                    <!-- Seletor de Ano -->
                     <div class="relative hidden" id="filter-year-container">
                         <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500 pointer-events-none"></i>
                         <select id="selected-year" onchange="window.appActions.updateSelectedYear(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg pl-9 pr-8 py-2.5 text-sm font-medium text-white focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-all cursor-pointer hover:bg-[#222] appearance-none">
@@ -264,17 +264,26 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="col-span-2 md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Fornecedor Principal</label>
-                            <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: Meta, AWS..." />
+                            <input type="text" id="client-supplier" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Meta" />
                         </div>
                         <div class="col-span-2 md:col-span-1">
-                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Sistema Base</label>
-                            <input type="text" id="client-system" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: Kommo" />
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Custo do Fornecedor</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
+                                <input type="text" id="client-supplierCost" class="currency-mask w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 pl-9 text-white focus:border-red-500 outline-none" placeholder="0,00" />
+                            </div>
                         </div>
                     </div>
                     
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Tipo de Serviço</label>
-                        <input type="text" id="client-serviceType" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: CRM + Vendas" />
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Sistema</label>
+                            <input type="text" id="client-system" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: Kommo" />
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Tipo de Serviço</label>
+                            <input type="text" id="client-serviceType" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: CRM + Vendas" />
+                        </div>
                     </div>
 
                     <div class="bg-[#1a1a1a] border border-[#333] rounded-xl p-4 mt-4 relative overflow-hidden">
@@ -478,7 +487,7 @@
     <!-- SCRIPT PRINCIPAL FIREBASE E LOGICA DE NEGOCIO -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getAuth, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, updatePassword, signInAnonymously, signInWithCustomToken } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
         import { getFirestore, collection, doc, setDoc, onSnapshot, addDoc, updateDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
         let firebaseConfig = {
@@ -525,6 +534,12 @@
             selectedMemberId: null
         };
 
+        // Redefinir escapeHTML dentro do módulo para uso nos templates literais
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
         function formatCurrency(val) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val) || 0);
         }
@@ -537,8 +552,6 @@
             if (!val) return 0;
             return ((Number(val) * 0.85) * 0.8575) * 0.35;
         }
-        
-        const escapeHTML = window.escapeHTML;
 
         function getMemberPct(client, memberId) {
             if (client.teamAllocations && Array.isArray(client.teamAllocations)) {
@@ -621,7 +634,7 @@
                 navMenu.innerHTML = tabs.map(function(t) {
                     const activeClass = state.activeTab === t.id ? 'bg-red-600 text-white font-bold shadow-lg shadow-red-900/40 translate-x-1' : 'text-gray-400 hover:bg-[#222] hover:text-white font-medium hover:translate-x-1';
                     return `
-                    <button onclick="window.appActions.changeTab('${t.id}')" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${activeClass}">
+                    <button onclick="window.appActions.changeTab(this.dataset.id)" data-id="${escapeHTML(t.id)}" class="flex items-center gap-3 w-full p-3.5 rounded-xl transition-all duration-300 ${activeClass}">
                         <i data-lucide="${t.icon}" class="w-5 h-5"></i><span>${t.label}</span>
                     </button>`;
                 }).join('');
@@ -1120,7 +1133,7 @@
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
-                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
+                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-50 cursor-pointer">
                                         ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
@@ -1265,7 +1278,7 @@
                             <div class="bg-[#111] border border-[#222] rounded-2xl p-6 shadow-xl flex flex-col">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                                     <h3 class="text-xl font-bold text-white tracking-tight">Desempenho por Integrante</h3>
-                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-500 cursor-pointer">
+                                    <select onchange="window.appActions.setMemberChart(this.value)" class="bg-[#1a1a1a] border border-[#333] rounded-lg px-3 py-2 text-sm text-white font-bold focus:outline-none focus:border-red-50 cursor-pointer">
                                         ${state.team.length === 0 ? '<option value="">Sem Equipe</option>' : state.team.map(function(m) { return `<option value="${escapeHTML(m.id)}" ${state.selectedMemberId === m.id ? 'selected' : ''}>${escapeHTML(m.name)}</option>`; }).join('')}
                                     </select>
                                 </div>
@@ -1782,6 +1795,17 @@
                 if(saImg) saImg.classList.add('hidden');
             }
         }
+
+        const initAuth = async () => {
+            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                try {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } catch(e) {
+                    console.error("Auto-login token falhou. Pode iniciar como Visitante.", e);
+                }
+            }
+        };
+        initAuth();
 
         let unsubListeners = [];
         onAuthStateChanged(auth, function(user) {
