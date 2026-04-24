@@ -426,7 +426,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e'; // ID Original Restaurado
 
         function getInitialMonth() {
             const d = new Date(); 
@@ -456,6 +456,7 @@
         function formatNumberToBR(val) {
             return (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
+        
         // A regra de negócio sagrada
         function calcMargin(val) {
             if (!val) return 0;
@@ -464,6 +465,7 @@
             const margemContribuicao = lucroLiquido * 0.35;
             return margemContribuicao;
         }
+        
         function getMemberPct(client, memberId) {
             if (client.teamAllocations && Array.isArray(client.teamAllocations)) {
                 const alloc = client.teamAllocations.find(a => a.memberId === memberId);
@@ -887,16 +889,21 @@
         // ================= PERFIL =================
         window.appActions.saveProfile = async () => {
             const name = document.getElementById('profile-name').value;
-            // No native function to easily change pass here without re-auth, so we just update profile
+            
             try {
-                if(auth.currentUser && !auth.currentUser.isAnonymous) {
+                if(auth.currentUser) {
                     await updateProfile(auth.currentUser, { displayName: name });
+                    state.user = auth.currentUser;
                     showToast('Perfil salvo!');
                     updateHeaderGreeting();
+                    renderContent(); // Força re-renderização
                 } else {
-                    showToast('Visitantes não podem mudar o perfil.', 'error');
+                    showToast('Erro: Utilizador não autenticado.', 'error');
                 }
-            } catch(e) { showToast('Erro', 'error'); }
+            } catch(e) { 
+                console.error(e); 
+                showToast('Erro ao salvar o perfil.', 'error'); 
+            }
         };
 
         // ================= RENDERING (Mantido fiel ao original, adaptado para ESModules) =================
