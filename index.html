@@ -327,25 +327,42 @@
         </div>
         
         <!-- Modal Custo Operacional -->
-        <div id="modal-expense" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-md shadow-2xl overflow-hidden flex-col animate-scale-in">
+        <div id="modal-expense" class="hidden bg-[#141414] border border-[#333] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex-col animate-scale-in">
             <div class="p-6 border-b border-[#2a2a2a] flex justify-between items-center bg-[#111]">
                 <h2 id="expense-modal-title" class="text-xl font-bold text-white tracking-tight">Custo / Fornecedor</h2>
                 <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 space-y-5">
-                <p class="text-xs text-gray-400 mb-4">Adicione ferramentas ou fornecedores para deduzir no caixa.</p>
+                <p class="text-xs text-gray-400 mb-4">Adicione ferramentas ou fornecedores e defina quando eles devem pesar no DFC.</p>
                 <input type="hidden" id="expense-id" />
+                
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Descrição / Fornecedor</label>
-                    <input type="text" id="expense-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Make..." />
+                    <input type="text" id="expense-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" placeholder="Ex: AWS, Make, Anúncios..." />
                 </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Tipo de Custo</label>
+                        <select id="expense-type" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none appearance-none">
+                            <option value="recorrente">Recorrente Mensal</option>
+                            <option value="unico">Custo Único</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Mês de Referência / Início</label>
+                        <input type="month" id="expense-month" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Alocado ao Projeto</label>
+                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Alocado a um Projeto (Opcional)</label>
                     <select id="expense-clientId" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none">
                     </select>
                 </div>
+                
                 <div>
-                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Custo Mensal (R$)</label>
+                    <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Valor do Custo (R$)</label>
                     <div class="relative w-full">
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-bold pointer-events-none">R$</span>
                         <input type="text" id="expense-amount" class="currency-mask w-full bg-[#0a0a0a] border border-red-900/50 rounded-lg p-3 pl-9 text-white font-bold focus:border-red-500 outline-none" />
@@ -365,15 +382,25 @@
                 <button onclick="window.appActions.closeModal()" class="p-2 text-gray-400 hover:text-red-500 bg-[#222] rounded-full"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
             <div class="p-6 space-y-5">
+                <p class="text-xs text-gray-400 mb-4">Insira o mês de início para que o custo não afete o DFC de meses anteriores.</p>
                 <input type="hidden" id="team-id" />
+                
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Nome do Integrante</label>
                     <input type="text" id="team-name" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Cargo / Função</label>
-                    <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Cargo / Função</label>
+                        <input type="text" id="team-role" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5 uppercase">Mês de Início</label>
+                        <input type="month" id="team-startMonth" class="w-full bg-[#0a0a0a] border border-[#333] rounded-lg p-3 text-white focus:border-red-500 outline-none" />
+                    </div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-bold text-red-500 mb-1.5 uppercase">Salário/Custo Fixo Mensal (R$)</label>
                     <div class="relative w-full">
@@ -426,7 +453,7 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e'; // ID Original Restaurado
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'squaddfc-a7f0e'; 
 
         function getInitialMonth() {
             const d = new Date(); 
@@ -449,7 +476,7 @@
 
         const escapeHTML = window.escapeHTML;
 
-        // Formatação
+        // ================= FUNÇÕES DE CÁLCULO E REGRAS DE NEGÓCIO =================
         function formatCurrency(val) {
             return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(val) || 0);
         }
@@ -457,7 +484,6 @@
             return (Number(val) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
         
-        // A regra de negócio sagrada
         function calcMargin(val) {
             if (!val) return 0;
             const mrrBruto = Number(val);
@@ -473,26 +499,49 @@
             }
             return 0;
         }
+
         function isClientOTActive(client, targetMonth) {
             const hasOT = Number(client.oneTimeValue || 0) > 0;
             if (!hasOT) return false;
             
-            // Verifica se já existe transação de baixa para este One Time em todo o histórico
             const otTransaction = state.transactions.find(t => t.clientId === client.id && t.type === 'onetime');
             if (otTransaction) {
-                // Se já foi pago, só aparece no previsto/realizado do mês em que ocorreu o pagamento
                 return otTransaction.month === targetMonth;
             }
 
-            // Se não foi pago, usa a data de entrega para fixar o mês, senão rola para o mês atual
             if (client.deliveryDate) {
                 return client.deliveryDate.substring(0, 7) === targetMonth;
             }
-            
             return true;
         }
 
-        // Configuração de Inputs Monetários
+        function getMemberCostInMonth(member, targetMonth) {
+            if (!member) return 0;
+            if (member.startMonth && member.startMonth > targetMonth) return 0;
+            return Number(member.cost || 0);
+        }
+
+        function getCalculatedCosts(targetMonth) {
+            const cFixo = state.team.reduce((a, c) => a + getMemberCostInMonth(c, targetMonth), 0);
+
+            let cVarFornecedores = 0;
+            state.expenses.forEach(e => {
+                if (e.type === 'unico' && e.month && e.month !== targetMonth) return;
+                if ((e.type === 'recorrente' || !e.type) && e.month && e.month > targetMonth) return;
+
+                if (!e.clientId) {
+                    cVarFornecedores += Number(e.amount || 0);
+                } else {
+                    const cl = state.clients.find(c => c.id === e.clientId);
+                    if (cl && ((Number(cl.recurringValue||0)>0 && cl.status!=='Churn') || isClientOTActive(cl, targetMonth))) {
+                        cVarFornecedores += Number(e.amount || 0);
+                    }
+                }
+            });
+            return { cFixo, cVarFornecedores, custosTotais: cFixo + cVarFornecedores };
+        }
+
+        // ================= CONFIGURAÇÃO DE INPUTS =================
         function setupCurrencyMasks() {
             document.querySelectorAll('.currency-mask').forEach(input => {
                 const newInp = input.cloneNode(true);
@@ -529,9 +578,8 @@
         }
 
         // ==========================================
-        // LÓGICA DE AÇÕES (IMPLEMENTAÇÃO COMPLETA)
+        // LÓGICA DE AÇÕES UI
         // ==========================================
-        
         window.appActions.toggleAuthMode = () => {
             state.isSignUpMode = !state.isSignUpMode;
             document.getElementById('name-field').classList.toggle('hidden', !state.isSignUpMode);
@@ -744,6 +792,7 @@
             document.getElementById('team-id').value = id || '';
             document.getElementById('team-name').value = m.name || '';
             document.getElementById('team-role').value = m.role || '';
+            document.getElementById('team-startMonth').value = m.startMonth || state.selectedMonth;
             setCurrencyInput('team-cost', m.cost);
             showModalBase('modal-team');
         };
@@ -757,6 +806,7 @@
             const data = {
                 name,
                 role: document.getElementById('team-role').value,
+                startMonth: document.getElementById('team-startMonth').value,
                 cost: getCurrencyInput('team-cost')
             };
 
@@ -785,6 +835,8 @@
             
             document.getElementById('expense-id').value = id || '';
             document.getElementById('expense-name').value = e.name || '';
+            document.getElementById('expense-type').value = e.type || 'recorrente';
+            document.getElementById('expense-month').value = e.month || state.selectedMonth;
             sel.value = e.clientId || '';
             setCurrencyInput('expense-amount', e.amount);
             
@@ -799,6 +851,8 @@
 
             const data = {
                 name,
+                type: document.getElementById('expense-type').value,
+                month: document.getElementById('expense-month').value,
                 clientId: document.getElementById('expense-clientId').value,
                 amount: getCurrencyInput('expense-amount')
             };
@@ -853,18 +907,7 @@
                 realMargin += t.marginValue !== undefined ? Number(t.marginValue) : calcMargin(Number(t.value || 0));
             });
 
-            const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-            let cVar = 0;
-            state.expenses.forEach(e => {
-                if (!e.clientId) cVar += Number(e.amount || 0);
-                else {
-                    const cl = state.clients.find(c => c.id === e.clientId);
-                    if (cl && ((Number(cl.recurringValue)>0 && cl.status!=='Churn') || isClientOTActive(cl, state.selectedMonth))) {
-                        cVar += Number(e.amount || 0);
-                    }
-                }
-            });
-            const custosTotais = cFixo + cVar;
+            const { custosTotais } = getCalculatedCosts(state.selectedMonth);
             const lucroLiquido = realMargin - custosTotais;
 
             const memberMargins = {};
@@ -901,24 +944,22 @@
         // ================= PERFIL =================
         window.appActions.saveProfile = async () => {
             const name = document.getElementById('profile-name').value;
-            
             try {
                 if(auth.currentUser) {
                     await updateProfile(auth.currentUser, { displayName: name });
                     state.user = auth.currentUser;
                     showToast('Perfil salvo!');
                     updateHeaderGreeting();
-                    renderContent(); // Força re-renderização
+                    renderContent(); 
                 } else {
                     showToast('Erro: Utilizador não autenticado.', 'error');
                 }
             } catch(e) { 
-                console.error(e); 
                 showToast('Erro ao salvar o perfil.', 'error'); 
             }
         };
 
-        // ================= RENDERING (Mantido fiel ao original, adaptado para ESModules) =================
+        // ================= RENDERING (INTERFACE) =================
 
         function renderNav() {
             const tabs = [
@@ -972,17 +1013,8 @@
                     const prevMarginOT = activeC.reduce((a, c) => isClientOTActive(c, state.selectedMonth) ? a + calcMargin(Number(c.oneTimeValue||0)) : a, 0);
                     mainFaturamento = [prevMarginRec + prevMarginOT];
                     
-                    let cVarFornecedores = 0;
-                    state.expenses.forEach(e => {
-                        if (!e.clientId) cVarFornecedores += Number(e.amount || 0);
-                        else {
-                            const cl = state.clients.find(c => c.id === e.clientId);
-                            if (cl && ((Number(cl.recurringValue||0) > 0 && cl.status !== 'Churn') || isClientOTActive(cl, state.selectedMonth))) {
-                                cVarFornecedores += Number(e.amount || 0);
-                            }
-                        }
-                    });
-                    mainCustos = [state.team.reduce((a, c) => a + Number(c.cost || 0), 0) + cVarFornecedores];
+                    const { custosTotais } = getCalculatedCosts(state.selectedMonth);
+                    mainCustos = [custosTotais];
                 } else if (state.filterMode === 'month') {
                     mainLabels = [state.selectedMonth];
                     const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
@@ -992,17 +1024,8 @@
                     } else {
                         const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                         mainFaturamento = [moTrans.reduce((a, c) => a + (c.marginValue !== undefined ? Number(c.marginValue) : calcMargin(Number(c.value || 0))), 0)];
-                        let cVarFornecedores = 0;
-                        state.expenses.forEach(e => {
-                            if (!e.clientId) cVarFornecedores += Number(e.amount || 0);
-                            else {
-                                const cl = state.clients.find(c => c.id === e.clientId);
-                                if (cl && ((Number(cl.recurringValue||0)>0 && cl.status!=='Churn') || isClientOTActive(cl, state.selectedMonth))) {
-                                    cVarFornecedores += Number(e.amount || 0);
-                                }
-                            }
-                        });
-                        mainCustos = [state.team.reduce((a, c) => a + Number(c.cost || 0), 0) + cVarFornecedores];
+                        const { custosTotais } = getCalculatedCosts(state.selectedMonth);
+                        mainCustos = [custosTotais];
                     }
                 } else {
                     const isAll = state.filterMode === 'all';
@@ -1045,7 +1068,6 @@
                     });
                 } else {
                     const member = state.team.find(m => m.id === state.selectedMemberId);
-                    const memberCost = member ? Number(member.cost || 0) : 0;
                     let mLabels = [], mMargins = [], mCosts = [];
 
                     if (state.filterMode === 'forecast') {
@@ -1056,13 +1078,12 @@
                             if (isClientOTActive(c, state.selectedMonth)) m += calcMargin(Number(c.oneTimeValue));
                             return sum + (m * getMemberPct(c, member.id));
                         }, 0);
-                        mMargins = [margin]; mCosts = [memberCost];
+                        mMargins = [margin]; mCosts = [getMemberCostInMonth(member, state.selectedMonth)];
                     } else if (state.filterMode === 'month') {
                         mLabels = [state.selectedMonth];
                         const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
                         if (closedMonth && closedMonth.memberMargins && closedMonth.memberMargins[member.id] !== undefined) {
                             mMargins = [Number(closedMonth.memberMargins[member.id] || 0)];
-                            mCosts = [memberCost];
                         } else {
                             const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                             const margin = moTrans.reduce((sum, t) => {
@@ -1070,8 +1091,9 @@
                                 const tMargin = t.marginValue !== undefined ? Number(t.marginValue) : calcMargin(Number(t.value || 0));
                                 return sum + (c ? tMargin * getMemberPct(c, member.id) : 0);
                             }, 0);
-                            mMargins = [margin]; mCosts = [memberCost];
+                            mMargins = [margin]; 
                         }
+                        mCosts = [getMemberCostInMonth(member, state.selectedMonth)];
                     } else {
                         const isAll = state.filterMode === 'all';
                         const closuresToUse = isAll ? state.closures : state.closures.filter(c => c.month && c.month.startsWith(state.selectedYear));
@@ -1087,13 +1109,13 @@
                                 return sum + (c ? tMargin * getMemberPct(c, member.id) : 0);
                             }, 0);
                         });
-                        mCosts = sortedC.map(() => memberCost); 
+                        mCosts = sortedC.map(closure => getMemberCostInMonth(member, closure.month)); 
                     }
 
                     const memberColors = mMargins.map((m, i) => m >= mCosts[i] ? '#10b981' : '#ef4444');
                     state.memberChartInstance = new Chart(mCtx, {
                         type: 'bar',
-                        data: { labels: mLabels, datasets: [ { label: 'Faturamento Repassado', data: mMargins, backgroundColor: memberColors, borderRadius: 4 }, { label: 'Custo Fixo', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 } ] },
+                        data: { labels: mLabels, datasets: [ { label: 'Faturamento Repassado', data: mMargins, backgroundColor: memberColors, borderRadius: 4 }, { label: 'Custo Fixo Mensal', data: mCosts, backgroundColor: '#4b5563', borderRadius: 4 } ] },
                         options: { 
                             responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, 
                             scales: { y: { beginAtZero: true, grid: { color: '#222', drawBorder: false }, ticks: { color: '#666', callback: val => 'R$ ' + (val/1000) + 'k' } }, x: { grid: { display: false }, ticks: { color: '#888', font: {weight: 'bold'} } } }, 
@@ -1142,20 +1164,10 @@
                 const prevMarginOT = activeC.reduce((a, c) => isClientOTActive(c, state.selectedMonth) ? a + calcMargin(Number(c.oneTimeValue||0)) : a, 0);
                 const totalMargemPrevista = prevMarginRec + prevMarginOT;
 
-                const cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                let cVarFornecedores = 0;
-                state.expenses.forEach(e => {
-                    if (!e.clientId) cVarFornecedores += Number(e.amount || 0);
-                    else {
-                        const cl = state.clients.find(c => c.id === e.clientId);
-                        if (cl && ((Number(cl.recurringValue||0)>0 && cl.status!=='Churn') || isClientOTActive(cl, state.selectedMonth))) {
-                            cVarFornecedores += Number(e.amount || 0);
-                        }
-                    }
-                });
-                const lucroPrevisto = totalMargemPrevista - (cFixo + cVarFornecedores);
+                const { cFixo, cVarFornecedores, custosTotais } = getCalculatedCosts(state.selectedMonth);
+                const lucroPrevisto = totalMargemPrevista - custosTotais;
 
-                infoText = `<strong>Visão Prevista:</strong> Potencial financeiro projetando faturamento, margem e custos como se todos fossem pagos hoje.`;
+                infoText = `<strong>Visão Prevista:</strong> Projetando a fotografia do momento como se todas as receitas ativas fossem pagas neste mês.`;
                 totalsHTML = `
                     <div class="p-6 rounded-2xl bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-[#222] shadow-lg relative group">
                         <h3 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-blue-500"></div> Faturamento Previsto (MRR + OT)</h3>
@@ -1164,7 +1176,7 @@
                     <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/20 to-[#0a0a0a] border border-emerald-900/30 shadow-lg relative group">
                         <h3 class="text-emerald-500 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> Margem Prevista (DFC)</h3>
                         <div class="text-3xl font-bold text-white mb-1">${formatCurrency(totalMargemPrevista)}</div>
-                        <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Totais:</span><span class="text-red-400 font-bold">-${formatCurrency(cFixo + cVarFornecedores)}</span></p>
+                        <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Totais (Eqp+Forn):</span><span class="text-red-400 font-bold">-${formatCurrency(custosTotais)}</span></p>
                     </div>
                     <div class="p-6 rounded-2xl ${lucroPrevisto >= 0 ? 'bg-gradient-to-br from-emerald-900/40 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 border-red-500/50'} border shadow-lg relative group">
                         <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Lucro Potencial</h3>
@@ -1179,9 +1191,9 @@
                 const realMRR = closuresToUse.reduce((a, c) => a + Number(c.mrrBrutoRealizado||0), 0);
                 const realMargin = closuresToUse.reduce((a, c) => a + Number(c.margemTotalRealizada||0), 0);
                 const lucro = closuresToUse.reduce((a, c) => a + Number(c.lucroLiquido||0), 0);
-                const cFixo = closuresToUse.reduce((a, c) => a + Number(c.custosTotais||0), 0); 
+                const cTotais = closuresToUse.reduce((a, c) => a + Number(c.custosTotais||0), 0); 
                 
-                infoText = `<strong>Visão Consolidada (${contextYear}):</strong> Soma dos meses travados.`;
+                infoText = `<strong>Visão Consolidada (${contextYear}):</strong> Soma baseada em todos os meses que já foram fechados e travados.`;
                 totalsHTML = `
                     <div class="p-6 rounded-2xl bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-[#222] shadow-lg relative group">
                         <h3 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div> MRR Bruto Realizado</h3>
@@ -1190,7 +1202,7 @@
                     <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/20 to-[#0a0a0a] border border-emerald-900/30 shadow-lg relative group">
                         <h3 class="text-emerald-500 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-500"></div> Margem DFC Gerada</h3>
                         <div class="text-3xl font-bold text-white mb-1">${formatCurrency(realMargin)}</div>
-                        <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Totais:</span><span class="text-red-400 font-bold">-${formatCurrency(cFixo)}</span></p>
+                        <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Históricos:</span><span class="text-red-400 font-bold">-${formatCurrency(cTotais)}</span></p>
                     </div>
                     <div class="p-6 rounded-2xl ${lucro >= 0 ? 'bg-gradient-to-br from-emerald-900/40 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 border-red-500/50'} border shadow-lg relative group">
                         <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Lucro Consolidado</h3>
@@ -1199,7 +1211,7 @@
                 `;
             } else {
                 const closedMonth = state.closures.find(c => c.month === state.selectedMonth);
-                let realMRR = 0, realOT = 0, realMargin = 0, cFixo = 0, cVarFornecedores = 0, lucro = 0;
+                let realMRR = 0, realOT = 0, realMargin = 0, cTotais = 0, lucro = 0;
                 let isLocked = false;
                 
                 if (closedMonth) {
@@ -1207,24 +1219,19 @@
                     realMRR = Number(closedMonth.mrrBrutoRealizado || 0); 
                     realMargin = Number(closedMonth.margemTotalRealizada || 0);
                     lucro = Number(closedMonth.lucroLiquido || 0);
-                    cFixo = Number(closedMonth.custosTotais || 0);
+                    cTotais = Number(closedMonth.custosTotais || 0);
                 } else {
                     const moTrans = state.transactions.filter(t => t.month === state.selectedMonth);
                     realMRR = moTrans.filter(t => t.type === 'recorrente').reduce((a, c) => a + Number(c.value || 0), 0);
                     realOT = moTrans.filter(t => t.type === 'onetime').reduce((a, c) => a + Number(c.value || 0), 0);
                     realMargin = moTrans.reduce((a, c) => a + (c.marginValue !== undefined ? Number(c.marginValue) : calcMargin(Number(c.value || 0))), 0);
-                    cFixo = state.team.reduce((a, c) => a + Number(c.cost || 0), 0);
-                    state.expenses.forEach(e => {
-                        if (!e.clientId) cVarFornecedores += Number(e.amount || 0);
-                        else {
-                            const cl = state.clients.find(c => c.id === e.clientId);
-                            if (cl && ((Number(cl.recurringValue||0)>0 && cl.status!=='Churn') || isClientOTActive(cl, state.selectedMonth))) cVarFornecedores += Number(e.amount || 0);
-                        }
-                    });
-                    lucro = realMargin - (cFixo + cVarFornecedores);
+                    
+                    const calculated = getCalculatedCosts(state.selectedMonth);
+                    cTotais = calculated.custosTotais;
+                    lucro = realMargin - cTotais;
                 }
 
-                infoText = `<strong>Visão do Mês (${state.selectedMonth}):</strong> Valores efetivamente baixados neste mês.`;
+                infoText = `<strong>Visão do Mês (${state.selectedMonth}):</strong> Cruzamento das receitas efetivamente recebidas contra os custos configurados para este mês.`;
                 totalsHTML = `
                     <div class="p-6 rounded-2xl bg-gradient-to-br from-[#111] to-[#0a0a0a] border border-[#222] shadow-lg relative group">
                         <h3 class="text-gray-400 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-gray-500"></div> MRR Bruto Realizado</h3>
@@ -1233,7 +1240,7 @@
                     <div class="p-6 rounded-2xl bg-gradient-to-br from-emerald-950/20 to-[#0a0a0a] border border-emerald-900/30 shadow-lg relative group">
                         <h3 class="text-emerald-500 text-xs uppercase font-bold tracking-widest mb-2 flex items-center gap-2"><div class="w-2 h-2 rounded-full bg-emerald-50 animate-pulse"></div> Margem DFC Realizada</h3>
                         <div class="text-3xl font-bold text-white mb-1">${formatCurrency(realMargin)}</div>
-                        <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Totais:</span><span class="text-red-400 font-bold">-${formatCurrency(cFixo + cVarFornecedores)}</span></p>
+                        <p class="text-xs text-gray-500 font-medium mt-2 border-t border-emerald-900/30 pt-2 flex justify-between"><span>Custos Aplicáveis:</span><span class="text-red-400 font-bold">-${formatCurrency(cTotais)}</span></p>
                     </div>
                     <div class="p-6 rounded-2xl ${lucro >= 0 ? 'bg-gradient-to-br from-emerald-900/40 border-emerald-500/50' : 'bg-gradient-to-br from-red-900/40 border-red-500/50'} border shadow-lg relative group">
                         <h3 class="text-white/70 text-xs uppercase font-bold tracking-widest mb-2">Resultado do Mês ${isLocked ? '(Fechado)' : ''}</h3>
@@ -1356,8 +1363,9 @@
                 html += state.team.map(member => {
                     const memberClients = state.clients.filter(c => c.status !== 'Churn');
                     const mrrMcGerado = memberClients.reduce((acc, c) => acc + (calcMargin(Number(c.recurringValue||0)) * getMemberPct(c, member.id)), 0);
-                    const mCost = Number(member.cost||0);
+                    const mCost = getMemberCostInMonth(member, state.selectedMonth);
                     const lucro = mrrMcGerado - mCost;
+                    const startStr = member.startMonth ? member.startMonth.split('-').reverse().join('/') : 'Sempre Ativo';
                     
                     return `
                     <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group flex flex-col cursor-pointer" onclick="window.appActions.openTeamModal('${escapeHTML(member.id)}')">
@@ -1368,11 +1376,11 @@
                             <div class="w-14 h-14 bg-red-800 rounded-xl flex items-center justify-center text-2xl font-black text-white">${escapeHTML(member.name).charAt(0).toUpperCase()}</div>
                             <div>
                                 <h3 class="font-black text-xl text-white">${escapeHTML(member.name)}</h3>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase">${escapeHTML(member.role)}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase">${escapeHTML(member.role)} <span class="text-blue-400 border border-blue-900/50 bg-blue-900/20 px-1 rounded ml-1">Início: ${startStr}</span></p>
                             </div>
                         </div>
                         <div class="space-y-1 bg-[#0a0a0a] rounded-xl p-4 border border-[#222]">
-                            <div class="flex justify-between items-center text-sm py-1"><span class="text-gray-500">Custo Fixo:</span><span class="text-red-400">-${formatCurrency(mCost)}</span></div>
+                            <div class="flex justify-between items-center text-sm py-1"><span class="text-gray-500">Custo Fixo Mensal:</span><span class="text-red-400">-${formatCurrency(mCost)}</span></div>
                             <div class="flex justify-between items-center text-sm py-1"><span class="text-gray-500">Margem (Repasse):</span><span class="text-emerald-400">+${formatCurrency(mrrMcGerado)}</span></div>
                             <div class="pt-2 mt-1 border-t border-[#333] flex justify-between items-center"><span class="text-xs font-black uppercase text-white">Lucro:</span><span class="font-black text-lg ${lucro>=0?'text-emerald-500':'text-red-500'}">${formatCurrency(lucro)}</span></div>
                         </div>
@@ -1393,6 +1401,9 @@
             else {
                 html += state.expenses.map(exp => {
                     const client = state.clients.find(c => c.id === exp.clientId);
+                    const typeStr = exp.type === 'unico' ? 'Único' : 'Recorrente';
+                    const monthStr = exp.month ? exp.month.split('-').reverse().join('/') : 'Sempre';
+
                     return `
                         <div class="bg-[#111] border border-[#222] rounded-2xl p-6 relative group flex flex-col justify-between">
                             <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1400,7 +1411,10 @@
                                 <button onclick="window.appActions.deleteExpense('${escapeHTML(exp.id)}')" class="w-8 h-8 flex items-center justify-center bg-[#222] rounded-lg text-gray-400 hover:text-red-500"><i data-lucide="trash" class="w-4 h-4"></i></button>
                             </div>
                             <h3 class="font-bold text-lg text-white mb-1 pr-16">${escapeHTML(exp.name)}</h3>
-                            <p class="text-[10px] font-bold uppercase ${client ? 'text-blue-400 bg-blue-900/20' : 'text-gray-400 bg-[#222]'} px-2.5 py-1 rounded inline-block mb-4 border w-max">${client ? 'Projeto: ' + escapeHTML(client.name) : 'Custo Geral'}</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <p class="text-[9px] font-bold uppercase tracking-wider ${client ? 'text-blue-400 bg-blue-900/20 border-blue-900/50' : 'text-gray-400 bg-[#222] border-[#333]'} px-2 py-0.5 rounded border">${client ? 'Projeto: ' + escapeHTML(client.name.split(' ')[0]) : 'Geral'}</p>
+                                <p class="text-[9px] font-bold uppercase tracking-wider text-orange-400 bg-orange-900/20 border-orange-900/50 px-2 py-0.5 rounded border">${typeStr} (${monthStr})</p>
+                            </div>
                             <div class="text-2xl font-black text-red-400 mt-2">-${formatCurrency(exp.amount)}</div>
                         </div>
                     `;
