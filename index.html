@@ -476,8 +476,20 @@
         function isClientOTActive(client, targetMonth) {
             const hasOT = Number(client.oneTimeValue || 0) > 0;
             if (!hasOT) return false;
-            const clientMonth = client.deliveryDate ? client.deliveryDate.substring(0, 7) : targetMonth;
-            return clientMonth === targetMonth;
+            
+            // Verifica se já existe transação de baixa para este One Time em todo o histórico
+            const otTransaction = state.transactions.find(t => t.clientId === client.id && t.type === 'onetime');
+            if (otTransaction) {
+                // Se já foi pago, só aparece no previsto/realizado do mês em que ocorreu o pagamento
+                return otTransaction.month === targetMonth;
+            }
+
+            // Se não foi pago, usa a data de entrega para fixar o mês, senão rola para o mês atual
+            if (client.deliveryDate) {
+                return client.deliveryDate.substring(0, 7) === targetMonth;
+            }
+            
+            return true;
         }
 
         // Configuração de Inputs Monetários
